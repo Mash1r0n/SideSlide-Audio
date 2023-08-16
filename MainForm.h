@@ -453,7 +453,7 @@ namespace SideSlideAudio {
         CoUninitialize();
     }
 
-    void Update(bool Way) {
+    void Updates(bool Way) {
         if (Way) {
 
             int i = CountOfSeanse - 1;
@@ -754,10 +754,10 @@ private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArg
     GetAudioSessionInfo(Volumes, Names, Icons);
     if (OldCount != CountOfSeanse) {
         if (CountOfSeanse > OldCount) {
-            Update(true);
+            Updates(true);
         }
         else {
-            Update(false);
+            Updates(false);
         }
         OldCount = CountOfSeanse;
     }
