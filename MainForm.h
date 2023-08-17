@@ -36,10 +36,51 @@ namespace SideSlideAudio {
 	/// </summary>
 	public ref class MainForm : public System::Windows::Forms::Form
 	{
+        ref class LPB: public PictureBox
+        {
+        private:
+            float loud;
+
+        public:
+            property float Loud
+            {
+                float get()
+                {
+                    return loud;
+                }
+                void set(float value)
+                {
+                    if (value != loud)
+                    {
+                        loud = value;
+                        UpdateBackgroundImage();
+                    }
+                }
+            }
+
+            LPB()
+            {
+                loud = 0.0f;
+                UpdateBackgroundImage();
+            }
+
+        private:
+            void UpdateBackgroundImage()
+            {
+
+                int num = Loud * 100;
+                String^ way = "Resources\\Loud\\Loud_" + num + ".png";
+                BackgroundImage = gcnew Bitmap(way);
+            }
+        };
+
+
+
 	public:
 		MainForm(void)
 		{
 			InitializeComponent();
+            DoubleBuffered = true;
 			//
 			//TODO: добавьте код конструктора
 			//
@@ -94,12 +135,12 @@ namespace SideSlideAudio {
             // 
             // UpdateLoud
             // 
-            this->UpdateLoud->Interval = 1;
+            this->UpdateLoud->Enabled = true;
+            this->UpdateLoud->Interval = 33;
             this->UpdateLoud->Tick += gcnew System::EventHandler(this, &MainForm::UpdateLoud_Tick);
             // 
             // UpdateVolume
             // 
-            this->UpdateVolume->Interval = 10;
             this->UpdateVolume->Tick += gcnew System::EventHandler(this, &MainForm::UpdateVolume_Tick);
             // 
             // MainForm
@@ -125,13 +166,13 @@ namespace SideSlideAudio {
     int OldCount = 0;
     int coef = 0;
 
+
     cli::array<String^>^ Volumes = gcnew cli::array<String^>(100);
     cli::array<String^>^ Names = gcnew cli::array<String^>(100);
     cli::array<String^>^ Icons = gcnew cli::array<String^>(100);
-    cli::array<String^>^ Louds = gcnew cli::array<String^>(100);
     cli::array<bool>^ Mutes = gcnew cli::array<bool>(100);
 
-    void RecordNoiseLevels(cli::array<String^>^ Louds) {
+    void RNT() {
         HRESULT hr;
         IMMDeviceEnumerator* pDeviceEnumerator = NULL;
         IMMDevice* pDevice = NULL;
@@ -174,6 +215,9 @@ namespace SideSlideAudio {
             goto Exit;
         }
 
+
+        
+
         for (int i = 0; i < sessionCount; i++) {
             hr = pSessionEnumerator->GetSession(i, &pSessionControl);
             if (FAILED(hr)) {
@@ -192,12 +236,61 @@ namespace SideSlideAudio {
 
                 goto Exit;
             }
+            try {
+                LC[i]->Loud = peak;
+            }
+            catch (System::NullReferenceException^) {
 
-            Louds[i] = peak.ToString();
+            }
 
             SAFE_RELEASE(pMeterInfo)
                 SAFE_RELEASE(pSessionControl)
         }
+
+    Exit:
+        SAFE_RELEASE(pDeviceEnumerator)
+            SAFE_RELEASE(pDevice)
+            SAFE_RELEASE(pSessionManager)
+            SAFE_RELEASE(pSessionEnumerator)
+            CoUninitialize();
+    }
+
+    void GetSC() {
+        HRESULT hr;
+        IMMDeviceEnumerator* pDeviceEnumerator = NULL;
+        IMMDevice* pDevice = NULL;
+        IAudioSessionManager2* pSessionManager = NULL;
+        IAudioSessionEnumerator* pSessionEnumerator = NULL;
+        int sessionCount;
+
+        CoInitialize(NULL);
+
+        hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pDeviceEnumerator);
+        if (FAILED(hr)) {
+            goto Exit;
+        }
+
+        hr = pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &pDevice);
+        if (FAILED(hr)) {
+            goto Exit;
+        }
+
+        hr = pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void**)&pSessionManager);
+        if (FAILED(hr)) {
+            goto Exit;
+        }
+
+        hr = pSessionManager->GetSessionEnumerator(&pSessionEnumerator);
+        if (FAILED(hr)) {
+            goto Exit;
+        }
+
+        hr = pSessionEnumerator->GetCount(&sessionCount);
+        if (FAILED(hr)) {
+            goto Exit;
+        }
+
+        CountOfSeanse = sessionCount;
 
     Exit:
         SAFE_RELEASE(pDeviceEnumerator)
@@ -230,8 +323,6 @@ namespace SideSlideAudio {
 
         int sessionCount;
         pSessionEnumerator->GetCount(&sessionCount);
-
-        CountOfSeanse = sessionCount;
 
         std::vector<float> volumes(sessionCount);
         std::vector<std::wstring> icons(sessionCount);
@@ -290,6 +381,49 @@ namespace SideSlideAudio {
         }
 
         // Use the volumes, icons, names, processIds, and exePaths arrays here
+
+        pSessionEnumerator->Release();
+        pSessionManager->Release();
+        pDevice->Release();
+        pDeviceEnumerator->Release();
+
+        CoUninitialize();
+    }
+
+    void GetVolume(cli::array<String^>^ Volumes) {
+        HRESULT hr;
+        IMMDeviceEnumerator* pDeviceEnumerator = NULL;
+        IMMDevice* pDevice = NULL;
+        IAudioSessionManager2* pSessionManager = NULL;
+        IAudioSessionEnumerator* pSessionEnumerator = NULL;
+
+        CoInitialize(NULL);
+
+        hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pDeviceEnumerator);
+
+        hr = pDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &pDevice);
+
+        hr = pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void**)&pSessionManager);
+
+        hr = pSessionManager->GetSessionEnumerator(&pSessionEnumerator);
+
+        int sessionCount;
+        pSessionEnumerator->GetCount(&sessionCount);
+
+        for (int i = 0; i < sessionCount; i++) {
+            IAudioSessionControl* pSessionControl = NULL;
+            ISimpleAudioVolume* pSimpleAudioVolume = NULL;
+
+            pSessionEnumerator->GetSession(i, &pSessionControl);
+            pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (void**)&pSimpleAudioVolume);
+
+            float volume;
+            pSimpleAudioVolume->GetMasterVolume(&volume);
+            Volumes[i] = (volume).ToString();
+
+            pSimpleAudioVolume->Release();
+            pSessionControl->Release();
+        }
 
         pSessionEnumerator->Release();
         pSessionManager->Release();
@@ -454,9 +588,14 @@ namespace SideSlideAudio {
     }
 
     void Updates(bool Way) {
+        Array::Clear(Volumes, 0, Volumes->Length);
+        Array::Clear(Names, 0, Names->Length);
+        Array::Clear(Icons, 0, Icons->Length);
+
+        GetAudioSessionInfo(Volumes, Names, Icons);
         if (Way) {
 
-            int i = CountOfSeanse - 1;
+            int i = CountOfSeanse-1;
 
             VC[i] = gcnew PictureBox();
             VC[i]->Location = System::Drawing::Point(0, 10 + coef);
@@ -465,7 +604,7 @@ namespace SideSlideAudio {
             VC[i]->BackColor = System::Drawing::Color::Transparent;
             MainPan->Controls->Add(VC[i]);
 
-            LC[i] = gcnew PictureBox();
+            LC[i] = gcnew LPB();
             LC[i]->Location = System::Drawing::Point(0, 0);
             LC[i]->Name = "LC" + i;
             LC[i]->Size = System::Drawing::Size(60, 60);
@@ -501,8 +640,6 @@ namespace SideSlideAudio {
                 LC[i]->Name = "LC" + i;
 
             }
-
-            VC[i]->BackgroundImage = gcnew Bitmap("Resources\\Vol\\Vol_" + 50 + ".png");
 
             Height = 10 + coef;
             MainPan->Size = System::Drawing::Size(92, 10 + coef);
@@ -544,9 +681,9 @@ namespace SideSlideAudio {
 		SetRegion();
 		SetMiddle();
         GetAudioSessionInfo(Volumes, Names, Icons);
+        GetSC();
         OldCount = CountOfSeanse;
         Open();
-        RecordNoiseLevels(Louds);
 	}
 
 	void SetRegion()
@@ -584,7 +721,7 @@ namespace SideSlideAudio {
 
     cli::array<PictureBox^>^ IconsOf = gcnew cli::array<PictureBox^>(100);
     cli::array<PictureBox^>^ VC = gcnew cli::array<PictureBox^>(100);
-    cli::array<PictureBox^>^ LC = gcnew cli::array<PictureBox^>(100);
+    cli::array<LPB^>^ LC = gcnew cli::array<LPB^>(100);
 
     void Open() {
 
@@ -604,7 +741,7 @@ namespace SideSlideAudio {
             VC[i]->BackColor = System::Drawing::Color::Transparent;
             MainPan->Controls->Add(VC[i]);
 
-            LC[i] = gcnew PictureBox();
+            LC[i] = gcnew LPB();
             LC[i]->Location = System::Drawing::Point(0, 0);
             LC[i]->Name = "LC" + i;
             LC[i]->Size = System::Drawing::Size(60, 60);
@@ -629,6 +766,7 @@ namespace SideSlideAudio {
             SetRegion();
             SetMiddle();
         }
+       
     }
 
     template<typename T>
@@ -640,11 +778,21 @@ namespace SideSlideAudio {
         }
     }
 
-    void UV() {
+    void UV() { //Баг в валю
         for (int i = 0; i < CountOfSeanse; i++) {
-            int num = (System::Single::Parse(Volumes[i]) * 100);
-            VC[i]->BackgroundImage = gcnew Bitmap("Resources\\Vol\\Vol_" + num + ".png");
+            try {
+                int num = (System::Single::Parse(Volumes[i]) * 100);
+                VC[i]->BackgroundImage = gcnew Bitmap("Resources\\Vol\\Vol_" + num + ".png");
+            }
+            catch (System::ArgumentNullException^) {
+                continue;
+            } 
         } 
+    }
+
+    void USV(int i) {
+        int num = (System::Single::Parse(Volumes[i]) * 100);
+        VC[i]->BackgroundImage = gcnew Bitmap("Resources\\Vol\\Vol_" + num + ".png");
     }
 
     private: System::Void pictureBox1_MouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
@@ -652,7 +800,7 @@ namespace SideSlideAudio {
         int ind = System::Convert::ToInt32(TB->Name->Substring(4));
 
         Array::Clear(Volumes, 0, Volumes->Length);
-        GetAudioSessionInfo(Volumes, Names, Icons);
+        GetVolume(Volumes);
         float num = System::Single::Parse(Volumes[ind]);
         float value = num * 100.0;
         if (e->Delta > 0 && value != 100) {
@@ -662,7 +810,7 @@ namespace SideSlideAudio {
             value--;
         }
         SetAudioSessionVolume(ind, value / 100.0);
-
+        USV(ind);
     }
 
     int startY = 0;
@@ -688,17 +836,18 @@ namespace SideSlideAudio {
         if (e->Button == System::Windows::Forms::MouseButtons::Left) {
 
             if (e->Y > prevY) {
-                value -= 2;
+                value -= 1;
             }
             else if (e->Y < prevY) {
-                value += 2;
+                value += 1;
             }
 
             if (value < 0) value = 0;
             if (value > 100) value = 100;
 
             SetAudioSessionVolume(ind, value / 100.0);
-            UV();
+            GetVolume(Volumes);
+            USV(ind);
 
             prevY = e->Y;
         }
@@ -732,26 +881,14 @@ namespace SideSlideAudio {
         }
         Tst->Image = image;
     }
-
+    
+    
 private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^ e) {
-        Array::Clear(Louds, 0, Louds->Length);
-        for (int i = 0; i < CountOfSeanse; i++) {
-            try {
-                RecordNoiseLevels(Louds);
-                int num = (System::Single::Parse(Louds[i]) * 100);
-                String^ way = "Resources\\Loud\\Loud_" + num + ".png";
-                LC[i]->BackgroundImage = gcnew Bitmap(way);
-            }
-            catch (System::ArgumentNullException^) {
-
-            }
-        }
+    RNT();
     }
+
 private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArgs^ e) {
-    Array::Clear(Volumes, 0, Volumes->Length);
-    Array::Clear(Names, 0, Names->Length);
-    Array::Clear(Icons, 0, Icons->Length);
-    GetAudioSessionInfo(Volumes, Names, Icons);
+    GetSC();   
     if (OldCount != CountOfSeanse) {
         if (CountOfSeanse > OldCount) {
             Updates(true);
@@ -761,7 +898,11 @@ private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArg
         }
         OldCount = CountOfSeanse;
     }
-    UV();
+    Array::Clear(Volumes, 0, Volumes->Length);
+    GetVolume(Volumes);
+    UV(); //Дооптимизировать это дело
+
 }
+
 };
 }
