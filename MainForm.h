@@ -15,6 +15,8 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "Shell32.lib")
 #pragma comment(lib, "Gdiplus.lib")
+
+#using <System.Runtime.dll>
 #define SAFE_RELEASE(punk)  \
               if ((punk) != NULL)  \
                 { (punk)->Release(); (punk) = NULL; }
@@ -32,7 +34,8 @@ namespace SideSlideAudio {
 	using namespace System::Drawing;
     using namespace msclr::interop;
     using namespace std;
-
+    
+    using namespace System::Runtime::ExceptionServices;
 	/// <summary>
 	/// Сводка для MainForm
 	/// </summary>
@@ -70,10 +73,12 @@ namespace SideSlideAudio {
             {
                 SesCou = "";
                 CountDiff++;
+                start = true;
             }
 
             ~TSC() {
                 CountDiff--;
+                start = true;
             }
         };
 
@@ -110,7 +115,7 @@ namespace SideSlideAudio {
             {
 
                 int num = Loud * 100;
-                String^ way = "Resources\\Loud\\Loud_" + num + ".png";
+                String^ way = "Resources\\Loud\\Loud_" + ((num == 97 ) ? 100 : num) + ".png";
                 BackgroundImage = gcnew Bitmap(way);
             }
         };
@@ -293,6 +298,7 @@ namespace SideSlideAudio {
     cli::array<bool>^ Mutes = gcnew cli::array<bool>(100);
 
     //Обновляет звук и громкость и колво сеансов
+    [HandleProcessCorruptedStateExceptions]
     void RNT() {
         HRESULT hr;
         IMMDeviceEnumerator* pDeviceEnumerator = NULL;
@@ -301,7 +307,7 @@ namespace SideSlideAudio {
         IAudioSessionEnumerator* pSessionEnumerator = NULL;
         IAudioSessionControl* pSessionControl = NULL;
         IAudioMeterInformation* pMeterInfo = NULL;
-        int sessionCount;
+        int sessionCount = CountOfSeanse;
         float peak;
 
         CoInitialize(NULL);
@@ -330,14 +336,6 @@ namespace SideSlideAudio {
             goto Exit;
         }
 
-        hr = pSessionEnumerator->GetCount(&sessionCount);
-        if (FAILED(hr)) {
-
-            goto Exit;
-        }   
-
-        CountOfSeanse = sessionCount;
-
         for (int i = 0; i < sessionCount; i++) {
             hr = pSessionEnumerator->GetSession(i, &pSessionControl);
             if (FAILED(hr)) {
@@ -360,7 +358,7 @@ namespace SideSlideAudio {
                 LC[i]->Loud = peak;
             }
             catch (System::NullReferenceException^) {
-
+                throw gcnew System::NullReferenceException;
             }
 
             SAFE_RELEASE(pMeterInfo)
@@ -369,8 +367,13 @@ namespace SideSlideAudio {
             IAudioSessionControl* pSessionControl = NULL;
             ISimpleAudioVolume* pSimpleAudioVolume = NULL;
 
-            pSessionEnumerator->GetSession(i, &pSessionControl);
-            pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (void**)&pSimpleAudioVolume);
+            try {
+                pSessionEnumerator->GetSession(i, &pSessionControl);
+                pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (void**)&pSimpleAudioVolume);
+            }
+            catch (System::AccessViolationException^) {
+                throw gcnew System::AccessViolationException;
+            }
 
             float volume;
             pSimpleAudioVolume->GetMasterVolume(&volume);
@@ -378,7 +381,7 @@ namespace SideSlideAudio {
                 VC[i]->Voll = volume;
             }
             catch (System::NullReferenceException^) {
-
+                throw gcnew System::NullReferenceException;
             }
 
             pSimpleAudioVolume->Release();
@@ -546,10 +549,8 @@ namespace SideSlideAudio {
 
         hr = pSessionManager->GetSessionEnumerator(&pSessionEnumerator);
 
-        int sessionCount;
-        pSessionEnumerator->GetCount(&sessionCount);
+        int sessionCount = CountOfSeanse;
 
-        sessionCount = CountOfSeanse;
         vector<DWORD> processIds(sessionCount);
         vector<std::wstring> exePaths(sessionCount);
 
@@ -559,6 +560,7 @@ namespace SideSlideAudio {
 
             pSessionEnumerator->GetSession(i, &pSessionControl);
             pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (void**)&pSessionControl2);
+
 
             LPWSTR displayName = NULL;
             pSessionControl2->GetDisplayName(&displayName);
@@ -745,18 +747,6 @@ namespace SideSlideAudio {
                 coef -= 65;
 
                 Index--;
-            }
-
-            for (int i = 0; i < CountOfSeanse; i++) {
-
-                IconsOf[i]->Name = "Icon" + i;
-                ExtractIconAndSetImage(Icons[i], IconsOf[i]);
-
-                VC[i]->Name = "VC" + i;
-
-
-                LC[i]->Name = "LC" + i;
-
             }
 
             Height = 10 + coef;
@@ -1032,11 +1022,21 @@ void GrowIcon(PictureBox^ Tst) {
 }
 
 private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^ e) {
-    RNT();
-    GetNames();
-    if (start) {
-        Updates(CountDiff);
+    GetSC();
+    try {
+        GetNames();
+        if (start) {
+            Updates(CountDiff);
+        }
+        RNT();
     }
+    catch (System::NullReferenceException^) {
+
+    }
+    catch (System::AccessViolationException^) {
+
+    }
+    
 }
 
 private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArgs^ e) {  
