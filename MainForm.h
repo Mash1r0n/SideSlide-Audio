@@ -17,6 +17,8 @@
 #pragma comment(lib, "Gdiplus.lib")
 
 #using <System.Runtime.dll>
+
+
 #define SAFE_RELEASE(punk)  \
               if ((punk) != NULL)  \
                 { (punk)->Release(); (punk) = NULL; }
@@ -34,8 +36,9 @@ namespace SideSlideAudio {
 	using namespace System::Drawing;
     using namespace msclr::interop;
     using namespace std;
-    
     using namespace System::Runtime::ExceptionServices;
+    using namespace System::Security;
+
 	/// <summary>
 	/// Сводка для MainForm
 	/// </summary>
@@ -298,6 +301,7 @@ namespace SideSlideAudio {
     cli::array<bool>^ Mutes = gcnew cli::array<bool>(100);
 
     //Обновляет звук и громкость и колво сеансов
+
     [HandleProcessCorruptedStateExceptions]
     void RNT() {
         HRESULT hr;
@@ -337,7 +341,12 @@ namespace SideSlideAudio {
         }
 
         for (int i = 0; i < sessionCount; i++) {
-            hr = pSessionEnumerator->GetSession(i, &pSessionControl);
+            try {
+                hr = pSessionEnumerator->GetSession(i, &pSessionControl);
+            }
+            catch (...) {
+                throw gcnew System::NullReferenceException;
+            }
             if (FAILED(hr)) {
 
                 goto Exit;
@@ -371,8 +380,8 @@ namespace SideSlideAudio {
                 pSessionEnumerator->GetSession(i, &pSessionControl);
                 pSessionControl->QueryInterface(__uuidof(ISimpleAudioVolume), (void**)&pSimpleAudioVolume);
             }
-            catch (System::AccessViolationException^) {
-                throw gcnew System::AccessViolationException;
+            catch (...) {
+                throw gcnew System::NullReferenceException;
             }
 
             float volume;
@@ -531,6 +540,8 @@ namespace SideSlideAudio {
         CoUninitialize();
     }
 
+    [HandleProcessCorruptedStateExceptions]
+    [SecurityCritical]
     void GetNames() {
         HRESULT hr;
         IMMDeviceEnumerator* pDeviceEnumerator = NULL;
@@ -558,9 +569,13 @@ namespace SideSlideAudio {
             IAudioSessionControl* pSessionControl = NULL;
             IAudioSessionControl2* pSessionControl2 = NULL;
 
-            pSessionEnumerator->GetSession(i, &pSessionControl);
-            pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (void**)&pSessionControl2);
-
+            try {
+                pSessionEnumerator->GetSession(i, &pSessionControl);
+                pSessionControl->QueryInterface(__uuidof(IAudioSessionControl2), (void**)&pSessionControl2);
+            }
+            catch (...) {
+                throw gcnew System::NullReferenceException;
+            }
 
             LPWSTR displayName = NULL;
             pSessionControl2->GetDisplayName(&displayName);
@@ -748,11 +763,12 @@ namespace SideSlideAudio {
 
                 Index--;
             }
-
-            Height = 10 + coef;
-            MainPan->Size = System::Drawing::Size(92, 10 + coef);
-            SetRegion();
-            SetMiddle();
+            if (10 + coef < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Height = 10 + coef;
+                MainPan->Size = System::Drawing::Size(92, 10 + coef);
+                SetRegion();
+                SetMiddle();
+            }
         }
 
         else if (CDiff > 0) {
@@ -786,10 +802,12 @@ namespace SideSlideAudio {
                 coef += 65;
             }
 
-            Height = 10 + coef;
-            MainPan->Size = System::Drawing::Size(92, 10 + coef);
-            SetRegion();
-            SetMiddle();
+            if (Height + 65 < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Height = 10 + coef;
+                MainPan->Size = System::Drawing::Size(92, 10 + coef);
+                SetRegion();
+                SetMiddle();
+            }
         }
 
         for (int i = 0; i < CountOfSeanse; i++) {
@@ -937,6 +955,10 @@ void UV() { //Баг в валю
 }
 
 private: System::Void pictureBox1_MouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+    if ((Control::ModifierKeys & Keys::Control) != Keys::Control) {
+        return;
+    }
+
     PictureBox^ TB = safe_cast<PictureBox^>(sender);
 
     int ind = System::Convert::ToInt32(TB->Name->Substring(4));
@@ -950,8 +972,9 @@ private: System::Void pictureBox1_MouseWheel(System::Object^ sender, System::Win
         value--;
     }
 
-    VC[ind]->Voll = value/100.0;
+    VC[ind]->Voll = value / 100.0;
 }
+
 
 int startY = 0;
 int value = 100;
@@ -1030,10 +1053,7 @@ private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^
         }
         RNT();
     }
-    catch (System::NullReferenceException^) {
-
-    }
-    catch (System::AccessViolationException^) {
+    catch (...) {
 
     }
     
