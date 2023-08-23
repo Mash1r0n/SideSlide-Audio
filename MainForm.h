@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <iostream>
 #include <psapi.h>
 #include <mmdeviceapi.h>
 #include <audiopolicy.h>
@@ -17,7 +18,6 @@
 #pragma comment(lib, "Gdiplus.lib")
 
 #using <System.Runtime.dll>
-
 
 #define SAFE_RELEASE(punk)  \
               if ((punk) != NULL)  \
@@ -45,7 +45,7 @@ namespace SideSlideAudio {
     int Index = 0;
     static int CountDiff = 0;
     static bool start = false;
-
+    static bool isEntered = false;
 	public ref class MainForm : public System::Windows::Forms::Form
 	{
         static cli::array<String^>^ Volumes = gcnew cli::array<String^>(100);
@@ -91,6 +91,7 @@ namespace SideSlideAudio {
             float loud;
 
         public:
+            int ProgressLoud;
             property float Loud
             {
                 float get()
@@ -118,8 +119,8 @@ namespace SideSlideAudio {
             {
 
                 int num = Loud * 100;
-                String^ way = "Resources\\Loud\\Loud_" + ((num == 97 ) ? 100 : num) + ".png";
-                BackgroundImage = gcnew Bitmap(way);
+                ProgressLoud = (num == 97) ? 100 : num;
+                Invalidate();
             }
         };
 
@@ -130,6 +131,7 @@ namespace SideSlideAudio {
             int ind;
 
         public:
+            int ProgressVol;
             property float Voll
             {
                 float get()
@@ -201,7 +203,8 @@ namespace SideSlideAudio {
             void USV() {
                 double nums = static_cast<double>(Voll * 100.0);
                 int num = round(nums);
-                BackgroundImage = gcnew Bitmap("Resources\\Vol\\Vol_" + num + ".png");
+                ProgressVol = ((num < 0) ? 0 : num);
+                Invalidate();
             }
         };
 
@@ -226,9 +229,15 @@ namespace SideSlideAudio {
 				delete components;
 			}
 		}
+
     private: System::Windows::Forms::Panel^ MainPan;
     private: System::Windows::Forms::Timer^ UpdateLoud;
     private: System::Windows::Forms::Timer^ UpdateVolume;
+    private: System::Windows::Forms::Timer^ ShowIt;
+private: System::Windows::Forms::NotifyIcon^ InTray;
+private: System::Windows::Forms::Timer^ ShowThis;
+private: System::Windows::Forms::Timer^ HideThis;
+
     private: System::ComponentModel::IContainer^ components;
     protected:
 
@@ -252,14 +261,18 @@ namespace SideSlideAudio {
             this->MainPan = (gcnew System::Windows::Forms::Panel());
             this->UpdateLoud = (gcnew System::Windows::Forms::Timer(this->components));
             this->UpdateVolume = (gcnew System::Windows::Forms::Timer(this->components));
+            this->ShowIt = (gcnew System::Windows::Forms::Timer(this->components));
+            this->InTray = (gcnew System::Windows::Forms::NotifyIcon(this->components));
+            this->ShowThis = (gcnew System::Windows::Forms::Timer(this->components));
+            this->HideThis = (gcnew System::Windows::Forms::Timer(this->components));
             this->SuspendLayout();
             // 
             // MainPan
             // 
             this->MainPan->AutoScroll = true;
-            this->MainPan->Location = System::Drawing::Point(6, 0);
+            this->MainPan->Location = System::Drawing::Point(6, 9);
             this->MainPan->Name = L"MainPan";
-            this->MainPan->Size = System::Drawing::Size(86, 60);
+            this->MainPan->Size = System::Drawing::Size(86, 70);
             this->MainPan->TabIndex = 0;
             // 
             // UpdateLoud
@@ -270,6 +283,29 @@ namespace SideSlideAudio {
             // UpdateVolume
             // 
             this->UpdateVolume->Tick += gcnew System::EventHandler(this, &MainForm::UpdateVolume_Tick);
+            // 
+            // ShowIt
+            // 
+            this->ShowIt->Enabled = true;
+            this->ShowIt->Interval = 1000;
+            this->ShowIt->Tick += gcnew System::EventHandler(this, &MainForm::ShowIt_Tick);
+            // 
+            // InTray
+            // 
+            this->InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
+            this->InTray->Text = L"SSA";
+            this->InTray->Visible = true;
+            this->InTray->DoubleClick += gcnew System::EventHandler(this, &MainForm::InTray_DoubleClick);
+            // 
+            // ShowThis
+            // 
+            this->ShowThis->Interval = 5;
+            this->ShowThis->Tick += gcnew System::EventHandler(this, &MainForm::ShowThis_Tick);
+            // 
+            // HideThis
+            // 
+            this->HideThis->Interval = 5;
+            this->HideThis->Tick += gcnew System::EventHandler(this, &MainForm::HideThis_Tick);
             // 
             // MainForm
             // 
@@ -388,6 +424,18 @@ namespace SideSlideAudio {
             pSimpleAudioVolume->GetMasterVolume(&volume);
             try {
                 VC[i]->Voll = volume;
+            }
+            catch (System::NullReferenceException^) {
+                throw gcnew System::NullReferenceException;
+            }
+
+            BOOL muteState;
+            pSimpleAudioVolume->GetMute(&muteState);
+            try {
+                if (muteState != Mutes[i]) {
+                    Mutes[i] = muteState;
+                    AutoMuteState(IconsOf[i]);
+                }
             }
             catch (System::NullReferenceException^) {
                 throw gcnew System::NullReferenceException;
@@ -765,7 +813,7 @@ namespace SideSlideAudio {
             }
             if (10 + coef < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
                 Height = 10 + coef;
-                MainPan->Size = System::Drawing::Size(92, 10 + coef);
+                MainPan->Size = System::Drawing::Size(92, -5 + coef);
                 SetRegion();
                 SetMiddle();
             }
@@ -774,10 +822,11 @@ namespace SideSlideAudio {
         else if (CDiff > 0) {
             for (int l = CountOfSeanse - CountDiff; l < CountOfSeanse; l++) {
                 VC[l] = gcnew VPB();
-                VC[l]->Location = System::Drawing::Point(0, 10 + coef);
+                VC[l]->Location = System::Drawing::Point(0, 0 + coef);
                 VC[l]->Name = "VC" + l;
                 VC[l]->Size = System::Drawing::Size(60, 60);
                 VC[l]->BackColor = System::Drawing::Color::Transparent;
+                VC[l]->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::PicTes_Paint);
                 MainPan->Controls->Add(VC[l]);
 
                 LC[l] = gcnew LPB();
@@ -785,6 +834,7 @@ namespace SideSlideAudio {
                 LC[l]->Name = "LC" + l;
                 LC[l]->Size = System::Drawing::Size(60, 60);
                 LC[l]->BackColor = System::Drawing::Color::Transparent;
+                LC[l]->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::PicTes_Paint);
                 VC[l]->Controls->Add(LC[l]);
 
                 IconsOf[l] = gcnew PictureBox();
@@ -793,18 +843,19 @@ namespace SideSlideAudio {
                 IconsOf[l]->Size = System::Drawing::Size(32, 32);
                 IconsOf[l]->BackColor = System::Drawing::Color::Transparent;
                 LC[l]->Controls->Add(IconsOf[l]);
-                ExtractIconAndSetImage(Icons[l], IconsOf[l]);
+                AutoMuteState(IconsOf[i]);
                 IconsOf[l]->DoubleClick += gcnew System::EventHandler(this, &MainForm::IconClick);
                 IconsOf[l]->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::IconMouseDown);
                 IconsOf[l]->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::IconMouseMove);
                 IconsOf[l]->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::pictureBox1_MouseWheel);
+                IconsOf[l]->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Icon_MouseUp);
 
                 coef += 65;
             }
 
             if (Height + 65 < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
                 Height = 10 + coef;
-                MainPan->Size = System::Drawing::Size(92, 10 + coef);
+                MainPan->Size = System::Drawing::Size(92, -5 + coef);
                 SetRegion();
                 SetMiddle();
             }
@@ -826,22 +877,24 @@ namespace SideSlideAudio {
         start = false;
     }
 
-	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
+    int StartX = 0;
 
+	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
         System::Type^ controlType = System::Windows::Forms::Control::typeid;
         controlType->InvokeMember("DoubleBuffered",
             System::Reflection::BindingFlags::SetProperty | System::Reflection::BindingFlags::Instance | System::Reflection::BindingFlags::NonPublic,
             nullptr, MainPan, gcnew cli::array<Object^>{ true });
-
-        Width = 70;
         Height = 10;
-		SetRegion();
+        SetRegion();
+        Width = 85;	
 		SetMiddle();
         GetAudioSessionInfo(Volumes, Names, Icons);
         GetSC();
         OldCount = CountOfSeanse;
         Open();
         UpdateLoud->Enabled = true;
+        StartX = Location.X;
+        TopMost = true;
 	}
 
 	void SetRegion()
@@ -874,7 +927,7 @@ namespace SideSlideAudio {
 		int formX = screenBounds.Right - this->Width;
 		int formY = screenBounds.Y + (screenBounds.Height - this->Height) / 2;
 
-		this->Location = Point(formX, formY);
+		this->Location = Point(formX+15, formY);
     }
 
     cli::array<PictureBox^>^ IconsOf = gcnew cli::array<PictureBox^>(100);
@@ -896,10 +949,11 @@ namespace SideSlideAudio {
             TrigNam[i]->SC = Names[i];
 
             VC[i] = gcnew VPB();
-            VC[i]->Location = System::Drawing::Point(0, 10 + coef);
+            VC[i]->Location = System::Drawing::Point(0, 0 + coef);
             VC[i]->Name = "VC" + i;
             VC[i]->Size = System::Drawing::Size(60, 60);
             VC[i]->BackColor = System::Drawing::Color::Transparent;
+            VC[i]->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::PicTes_Paint);
             MainPan->Controls->Add(VC[i]);
 
             LC[i] = gcnew LPB();
@@ -907,6 +961,7 @@ namespace SideSlideAudio {
             LC[i]->Name = "LC" + i;
             LC[i]->Size = System::Drawing::Size(60, 60);
             LC[i]->BackColor = System::Drawing::Color::Transparent;
+            LC[i]->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::PicTes_Paint);
             VC[i]->Controls->Add(LC[i]);
 
             IconsOf[i] = gcnew PictureBox();
@@ -915,17 +970,22 @@ namespace SideSlideAudio {
             IconsOf[i]->Size = System::Drawing::Size(32, 32);
             IconsOf[i]->BackColor = System::Drawing::Color::Transparent;
             LC[i]->Controls->Add(IconsOf[i]);
-            ExtractIconAndSetImage(Icons[i], IconsOf[i]);
+            AutoMuteState(IconsOf[i]);
             IconsOf[i]->DoubleClick += gcnew System::EventHandler(this, &MainForm::IconClick);
             IconsOf[i]->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::IconMouseDown);
             IconsOf[i]->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::IconMouseMove);
             IconsOf[i]->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::pictureBox1_MouseWheel);
+            IconsOf[i]->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Icon_MouseUp);
 
             coef += 65;
-            Height = 10 + coef;
-            MainPan->Size = System::Drawing::Size(92, 10+coef);
-            SetRegion();
-            SetMiddle();
+               
+            if (coef < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Height = 10 + coef;
+                MainPan->Size = System::Drawing::Size(92, -5 + coef);
+                SetRegion();
+                SetMiddle();
+            }
+
         }
 
         CountDiff = 0;
@@ -989,6 +1049,7 @@ private: System::Void IconMouseDown(System::Object^ sender, System::Windows::For
         startY = e->Y;
         prevY = 0;
         value = System::Single::Parse(Volumes[ind]) * 100;
+        isEntered = true;
     }
 }
 
@@ -1015,6 +1076,15 @@ private: System::Void IconMouseMove(System::Object^ sender, System::Windows::For
     }
 
 }
+
+    void AutoMuteState(PictureBox^ Tst) {
+           int ind = System::Convert::ToInt32(Tst->Name->Substring(4));
+           GetAudioSessionMuteStates(Mutes);
+           ExtractIconAndSetImage(Icons[ind], Tst);
+           if (Mutes[ind]) {
+               GrowIcon(Tst);
+           }
+    }
 
 private: System::Void IconClick(System::Object^ sender, System::EventArgs^ e) {
     PictureBox^ TB = safe_cast<PictureBox^>(sender);
@@ -1062,6 +1132,75 @@ private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^
 private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArgs^ e) {  
     
 }
+private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) {
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);  
 
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);  
+
+    int threshold = 1;
+
+    if (screenWidth - cursorPos.x <= threshold)
+    {
+        HideThis->Enabled = true;
+    }
+    else if (!this->ClientRectangle.Contains(this->PointToClient(Control::MousePosition)) && !isEntered) {
+        ShowThis->Enabled = true;
+    }
+
+}
+private: System::Void Icon_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+    isEntered = false;
+}
+private: System::Void InTray_DoubleClick(System::Object^ sender, System::EventArgs^ e) {
+    Application::Exit();
+}
+
+       int i = 0;
+
+private: System::Void ShowThis_Tick(System::Object^ sender, System::EventArgs^ e) {
+    if (i <= 70) {
+        Location = System::Drawing::Point(StartX + i, Location.Y);
+        BringToFront();
+        i+=5;
+    }
+    else {
+        ShowThis->Enabled = false;
+    }
+}
+
+private: System::Void HideThis_Tick(System::Object^ sender, System::EventArgs^ e) {
+    if (i >= 0) {
+        Location = System::Drawing::Point(StartX + i, Location.Y);
+        i-=5;
+    }
+
+    else {
+        i = 0;
+        HideThis->Enabled = false;
+    }
+}
+       //Подрубить ещё и оптимизацию сюда
+private: System::Void PicTes_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
+    
+    PictureBox^ pictureBox = dynamic_cast<PictureBox^>(sender);
+    Graphics^ g = e->Graphics;
+
+    string nam = marshal_as<string>(pictureBox->Name->Substring(0, 2));
+    int ind = System::Convert::ToInt64(pictureBox->Name->Substring(2));
+
+    int angle = static_cast<int>(360.0 * (nam == "LC" ? LC[ind]->ProgressLoud : VC[ind]->ProgressVol) / 100);
+
+    int diameter = (nam == "LC" ? 51 : 57);
+    int x = (pictureBox->Width - diameter) / 2;
+    int y = (pictureBox->Height - diameter) / 2;
+
+    g->SmoothingMode = System::Drawing::Drawing2D::SmoothingMode::AntiAlias;
+
+    int penWidth = 3;
+    Pen^ penBlue = gcnew Pen((nam == "LC" ? Color::Gray : Color::Yellow), penWidth);
+    g->DrawArc(penBlue, x, y, diameter, diameter, -90, angle);
+}
 };
 }
+//Подрубить математическое построение круга
