@@ -269,7 +269,6 @@ private: System::Windows::Forms::Timer^ HideThis;
             // 
             // MainPan
             // 
-            this->MainPan->AutoScroll = true;
             this->MainPan->Location = System::Drawing::Point(6, 9);
             this->MainPan->Name = L"MainPan";
             this->MainPan->Size = System::Drawing::Size(86, 70);
@@ -282,6 +281,8 @@ private: System::Windows::Forms::Timer^ HideThis;
             // 
             // UpdateVolume
             // 
+            this->UpdateVolume->Enabled = true;
+            this->UpdateVolume->Interval = 1000;
             this->UpdateVolume->Tick += gcnew System::EventHandler(this, &MainForm::UpdateVolume_Tick);
             // 
             // ShowIt
@@ -317,10 +318,12 @@ private: System::Windows::Forms::Timer^ HideThis;
             this->Controls->Add(this->MainPan);
             this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::None;
             this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
+            this->KeyPreview = true;
             this->Name = L"MainForm";
             this->Text = L"SSA";
             this->Load += gcnew System::EventHandler(this, &MainForm::MainForm_Load);
             this->Shown += gcnew System::EventHandler(this, &MainForm::MainForm_Shown);
+            this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &MainForm::MainForm_KeyDown);
             this->ResumeLayout(false);
 
         }
@@ -329,6 +332,8 @@ private: System::Windows::Forms::Timer^ HideThis;
     int CountOfSeanse = 0;
     int OldCount = 0;
     int coef = 0;
+
+    bool Over = false;
 
     cli::array<TSC^>^ TrigNam = gcnew cli::array<TSC^>(100);
 
@@ -812,10 +817,14 @@ private: System::Windows::Forms::Timer^ HideThis;
                 Index--;
             }
             if (10 + coef < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Over = false;
                 Height = 10 + coef;
                 MainPan->Size = System::Drawing::Size(92, -5 + coef);
                 SetRegion();
                 SetMiddle();
+            }
+            else {
+                Over = true;
             }
         }
 
@@ -854,10 +863,14 @@ private: System::Windows::Forms::Timer^ HideThis;
             }
 
             if (Height + 65 < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Over = false;
                 Height = 10 + coef;
                 MainPan->Size = System::Drawing::Size(92, -5 + coef);
                 SetRegion();
                 SetMiddle();
+            }
+            else {
+                Over = true;
             }
         }
 
@@ -879,6 +892,9 @@ private: System::Windows::Forms::Timer^ HideThis;
 
     int StartX = 0;
 
+    int OldWidth = 0;
+    int OldRight = 0;
+
 	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
         System::Type^ controlType = System::Windows::Forms::Control::typeid;
         controlType->InvokeMember("DoubleBuffered",
@@ -895,6 +911,9 @@ private: System::Windows::Forms::Timer^ HideThis;
         UpdateLoud->Enabled = true;
         StartX = Location.X;
         TopMost = true;
+        SideSlideAudio::Rectangle screenBounds = System::Windows::Forms::Screen::PrimaryScreen->Bounds;
+        OldWidth = screenBounds.Width;
+        OldRight = screenBounds.Right;
 	}
 
 	void SetRegion()
@@ -980,12 +999,15 @@ private: System::Windows::Forms::Timer^ HideThis;
             coef += 65;
                
             if (coef < System::Windows::Forms::Screen::PrimaryScreen->Bounds.Height - 80) {
+                Over = false;
                 Height = 10 + coef;
                 MainPan->Size = System::Drawing::Size(92, -5 + coef);
                 SetRegion();
                 SetMiddle();
             }
-
+            else {
+                Over = true;
+            }
         }
 
         CountDiff = 0;
@@ -1002,7 +1024,7 @@ private: System::Windows::Forms::Timer^ HideThis;
         }
     }
 
-void UV() { //Баг в валю
+void UV() {
     for (int i = 0; i < CountOfSeanse; i++) {
         try {
             int num = (System::Single::Parse(Volumes[i]) * 100);
@@ -1077,14 +1099,14 @@ private: System::Void IconMouseMove(System::Object^ sender, System::Windows::For
 
 }
 
-    void AutoMuteState(PictureBox^ Tst) {
-           int ind = System::Convert::ToInt32(Tst->Name->Substring(4));
-           GetAudioSessionMuteStates(Mutes);
-           ExtractIconAndSetImage(Icons[ind], Tst);
-           if (Mutes[ind]) {
-               GrowIcon(Tst);
-           }
-    }
+void AutoMuteState(PictureBox^ Tst) {
+        int ind = System::Convert::ToInt32(Tst->Name->Substring(4));
+        GetAudioSessionMuteStates(Mutes);
+        ExtractIconAndSetImage(Icons[ind], Tst);
+        if (Mutes[ind]) {
+            GrowIcon(Tst);
+        }
+}
 
 private: System::Void IconClick(System::Object^ sender, System::EventArgs^ e) {
     PictureBox^ TB = safe_cast<PictureBox^>(sender);
@@ -1128,10 +1150,20 @@ private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^
     }
     
 }
-
-private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArgs^ e) {  
     
+private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArgs^ e) {  
+    SideSlideAudio::Rectangle screenBounds = System::Windows::Forms::Screen::PrimaryScreen->Bounds;
+    if (screenBounds.Right != OldRight || screenBounds.Width != OldWidth) {
+        OldWidth = screenBounds.Width;
+        OldRight = screenBounds.Right;
+        HideThis->Enabled = false;
+        ShowThis->Enabled = false;
+        SetMiddle();
+        StartX = Location.X;
+        Location = System::Drawing::Point(StartX + 70, Location.Y);
+    }
 }
+
 private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) {
     POINT cursorPos;
     GetCursorPos(&cursorPos);  
@@ -1140,15 +1172,17 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
 
     int threshold = 1;
 
-    if (screenWidth - cursorPos.x <= threshold)
-    {
-        HideThis->Enabled = true;
+    if (screenWidth - cursorPos.x <= threshold) {
+        HideThis->Enabled = true; //Показать
     }
+
     else if (!this->ClientRectangle.Contains(this->PointToClient(Control::MousePosition)) && !isEntered) {
-        ShowThis->Enabled = true;
+        UpdateLoud->Enabled = false;
+        ShowThis->Enabled = true; //Скрыть
     }
 
 }
+
 private: System::Void Icon_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
     isEntered = false;
 }
@@ -1161,7 +1195,6 @@ private: System::Void InTray_DoubleClick(System::Object^ sender, System::EventAr
 private: System::Void ShowThis_Tick(System::Object^ sender, System::EventArgs^ e) {
     if (i <= 70) {
         Location = System::Drawing::Point(StartX + i, Location.Y);
-        BringToFront();
         i+=5;
     }
     else {
@@ -1178,9 +1211,9 @@ private: System::Void HideThis_Tick(System::Object^ sender, System::EventArgs^ e
     else {
         i = 0;
         HideThis->Enabled = false;
+        UpdateLoud->Enabled = true;
     }
 }
-       //Подрубить ещё и оптимизацию сюда
 private: System::Void PicTes_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
     
     PictureBox^ pictureBox = dynamic_cast<PictureBox^>(sender);
@@ -1201,6 +1234,18 @@ private: System::Void PicTes_Paint(System::Object^ sender, System::Windows::Form
     Pen^ penBlue = gcnew Pen((nam == "LC" ? Color::Gray : Color::Yellow), penWidth);
     g->DrawArc(penBlue, x, y, diameter, diameter, -90, angle);
 }
+private: System::Void MainForm_KeyDown(System::Object^ sender, System::Windows::Forms::KeyEventArgs^ e) {
+    int dy = 60;
+
+    Point scrollPos = MainPan->AutoScrollPosition;
+
+    if (e->KeyCode == Keys::W) { //Ес чё Over - индикатор переполнения панели
+       MainPan->AutoScrollPosition = Point(-scrollPos.X, -scrollPos.Y - dy);
+    }
+    else if (e->KeyCode == Keys::S) {
+        MainPan->AutoScrollPosition = Point(-scrollPos.X, -scrollPos.Y + dy);
+    }
+}
 };
 }
-//Подрубить математическое построение круга
+//Подрубить Автоматическую проверку размера экрана || Добавить триггер смены устройства вывода
