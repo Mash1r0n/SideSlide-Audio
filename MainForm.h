@@ -237,6 +237,11 @@ namespace SideSlideAudio {
 private: System::Windows::Forms::NotifyIcon^ InTray;
 private: System::Windows::Forms::Timer^ ShowThis;
 private: System::Windows::Forms::Timer^ HideThis;
+private: System::Windows::Forms::ContextMenuStrip^ MainTray;
+private: System::Windows::Forms::ToolStripMenuItem^ Item1;
+private: System::Windows::Forms::ToolStripMenuItem^ Item2;
+
+
 
     private: System::ComponentModel::IContainer^ components;
     protected:
@@ -263,8 +268,12 @@ private: System::Windows::Forms::Timer^ HideThis;
             this->UpdateVolume = (gcnew System::Windows::Forms::Timer(this->components));
             this->ShowIt = (gcnew System::Windows::Forms::Timer(this->components));
             this->InTray = (gcnew System::Windows::Forms::NotifyIcon(this->components));
+            this->MainTray = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
+            this->Item1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Item2 = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->ShowThis = (gcnew System::Windows::Forms::Timer(this->components));
             this->HideThis = (gcnew System::Windows::Forms::Timer(this->components));
+            this->MainTray->SuspendLayout();
             this->SuspendLayout();
             // 
             // MainPan
@@ -293,10 +302,34 @@ private: System::Windows::Forms::Timer^ HideThis;
             // 
             // InTray
             // 
+            this->InTray->ContextMenuStrip = this->MainTray;
             this->InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
             this->InTray->Text = L"SSA";
             this->InTray->Visible = true;
             this->InTray->DoubleClick += gcnew System::EventHandler(this, &MainForm::InTray_DoubleClick);
+            // 
+            // MainTray
+            // 
+            this->MainTray->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->Item1, this->Item2 });
+            this->MainTray->Name = L"MainTray";
+            this->MainTray->Size = System::Drawing::Size(181, 48);
+            this->MainTray->Closing += gcnew System::Windows::Forms::ToolStripDropDownClosingEventHandler(this, &MainForm::MainTray_Closing);
+            // 
+            // Item1
+            // 
+            this->Item1->Checked = true;
+            this->Item1->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->Item1->Name = L"Item1";
+            this->Item1->Size = System::Drawing::Size(180, 22);
+            this->Item1->Text = L"toolStripMenuItem1";
+            this->Item1->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item1_MouseDown);
+            // 
+            // Item2
+            // 
+            this->Item2->Name = L"Item2";
+            this->Item2->Size = System::Drawing::Size(180, 22);
+            this->Item2->Text = L"toolStripMenuItem2";
+            this->Item2->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item2_MouseDown);
             // 
             // ShowThis
             // 
@@ -324,6 +357,7 @@ private: System::Windows::Forms::Timer^ HideThis;
             this->Load += gcnew System::EventHandler(this, &MainForm::MainForm_Load);
             this->Shown += gcnew System::EventHandler(this, &MainForm::MainForm_Shown);
             this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &MainForm::MainForm_KeyDown);
+            this->MainTray->ResumeLayout(false);
             this->ResumeLayout(false);
 
         }
@@ -334,6 +368,8 @@ private: System::Windows::Forms::Timer^ HideThis;
     int coef = 0;
 
     bool Over = false;
+
+    bool Side = false;
 
     cli::array<TSC^>^ TrigNam = gcnew cli::array<TSC^>(100);
 
@@ -941,12 +977,20 @@ private: System::Windows::Forms::Timer^ HideThis;
 	}
 
 	void SetMiddle() {
-		SideSlideAudio::Rectangle screenBounds = System::Windows::Forms::Screen::PrimaryScreen->Bounds;
+        SideSlideAudio::Rectangle screenBounds = System::Windows::Forms::Screen::PrimaryScreen->Bounds;
+        MainPan->Location = System::Drawing::Point(MainPan->Location.X + (Side ? 0 : 2), MainPan->Location.Y);
+        if (Side) {
+            int formX = screenBounds.Right - this->Width;
+            int formY = screenBounds.Y + (screenBounds.Height - this->Height) / 2;
 
-		int formX = screenBounds.Right - this->Width;
-		int formY = screenBounds.Y + (screenBounds.Height - this->Height) / 2;
+            this->Location = Point(formX + 15, formY);
+        }
+        else {
+            int formX = screenBounds.Left;
+            int formY = screenBounds.Y + (screenBounds.Height - this->Height) / 2;
 
-		this->Location = Point(formX+15, formY);
+            this->Location = Point(formX - 15, formY);
+        }
     }
 
     cli::array<PictureBox^>^ IconsOf = gcnew cli::array<PictureBox^>(100);
@@ -1164,6 +1208,26 @@ private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArg
     }
 }
 
+    bool FullSC()
+    {
+        POINT cursorPos;
+        GetCursorPos(&cursorPos);
+        HWND hwnd = WindowFromPoint(cursorPos);
+        if (hwnd == GetDesktopWindow())
+        {
+            return false;
+        }
+
+        LONG style = GetWindowLong(hwnd, GWL_STYLE);
+        RECT rect;
+        GetWindowRect(hwnd, &rect);
+
+        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        return (style & WS_POPUP) && (rect.right - rect.left == screenWidth) && (rect.bottom - rect.top == screenHeight);
+    }
+
 private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) {
     POINT cursorPos;
     GetCursorPos(&cursorPos);  
@@ -1172,13 +1236,25 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
 
     int threshold = 1;
 
-    if (screenWidth - cursorPos.x <= threshold) {
-        HideThis->Enabled = true; //Показать
-    }
+    if (Side) {
+        if (screenWidth - cursorPos.x <= threshold && !FullSC()) {
+            HideThis->Enabled = true; //Показать
+        }
 
-    else if (!this->ClientRectangle.Contains(this->PointToClient(Control::MousePosition)) && !isEntered) {
-        UpdateLoud->Enabled = false;
-        ShowThis->Enabled = true; //Скрыть
+        else if (!this->ClientRectangle.Contains(this->PointToClient(Control::MousePosition)) && !isEntered) {
+            UpdateLoud->Enabled = false;
+            ShowThis->Enabled = true; //Скрыть
+        }
+    }
+    else {
+        if (cursorPos.x <= threshold && !FullSC()) {
+            ShowThis->Enabled = true; //Показать
+        }
+
+        else if (!this->ClientRectangle.Contains(this->PointToClient(Control::MousePosition)) && !isEntered) {
+            UpdateLoud->Enabled = false;
+            HideThis->Enabled = true; //Скрыть
+        }
     }
 
 }
@@ -1193,25 +1269,26 @@ private: System::Void InTray_DoubleClick(System::Object^ sender, System::EventAr
        int i = 0;
 
 private: System::Void ShowThis_Tick(System::Object^ sender, System::EventArgs^ e) {
-    if (i <= 70) {
+    if (i <= (Side ? 70 : 0)) {
         Location = System::Drawing::Point(StartX + i, Location.Y);
         i+=5;
     }
     else {
         ShowThis->Enabled = false;
+        UpdateLoud->Enabled = (Side ? false : true);
     }
 }
 
 private: System::Void HideThis_Tick(System::Object^ sender, System::EventArgs^ e) {
-    if (i >= 0) {
+    if (i >= (Side ? 0 : -70)) {
         Location = System::Drawing::Point(StartX + i, Location.Y);
         i-=5;
     }
 
     else {
-        i = 0;
+        i = (Side ? 0 : -70);
         HideThis->Enabled = false;
-        UpdateLoud->Enabled = true;
+        UpdateLoud->Enabled = (Side ? true : false);
     }
 }
 private: System::Void PicTes_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
@@ -1246,6 +1323,27 @@ private: System::Void MainForm_KeyDown(System::Object^ sender, System::Windows::
         MainPan->AutoScrollPosition = Point(-scrollPos.X, -scrollPos.Y + dy);
     }
 }
+
+    bool keepOpen = false;
+
+private: System::Void MainTray_Closing(System::Object^ sender, System::Windows::Forms::ToolStripDropDownClosingEventArgs^ e) {
+    if (e->CloseReason == ToolStripDropDownCloseReason::ItemClicked && keepOpen)
+    {
+        e->Cancel = true;
+    }
+    else {
+        e->Cancel = false;
+    }
+}
+private: System::Void Item1_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+    keepOpen = true;
+    Item1->Checked = true;
+    Item2->Checked = false;
+}
+private: System::Void Item2_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+    keepOpen = true;
+    Item2->Checked = true;
+    Item1->Checked = false;
+}
 };
 }
-//Подрубить Автоматическую проверку размера экрана || Добавить триггер смены устройства вывода
