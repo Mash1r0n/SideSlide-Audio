@@ -927,6 +927,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
     }
 
     int StartX = 0;
+    int MainPanStartX = 0;
 
     int OldWidth = 0;
     int OldRight = 0;
@@ -939,6 +940,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
         Height = 10;
         SetRegion();
         Width = 85;	
+        MainPanStartX = MainPan->Location.X;
 		SetMiddle();
         GetAudioSessionInfo(Volumes, Names, Icons);
         GetSC();
@@ -978,7 +980,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
 
 	void SetMiddle() {
         SideSlideAudio::Rectangle screenBounds = System::Windows::Forms::Screen::PrimaryScreen->Bounds;
-        MainPan->Location = System::Drawing::Point(MainPan->Location.X + (Side ? 0 : 2), MainPan->Location.Y);
+        MainPan->Location = System::Drawing::Point(MainPanStartX + (Side ? 0 : 14), MainPan->Location.Y);
         if (Side) {
             int formX = screenBounds.Right - this->Width;
             int formY = screenBounds.Y + (screenBounds.Height - this->Height) / 2;
