@@ -38,6 +38,7 @@ namespace SideSlideAudio {
     using namespace std;
     using namespace System::Runtime::ExceptionServices;
     using namespace System::Security;
+    using namespace System::Drawing::Drawing2D;
 
 	/// <summary>
 	/// Сводка для MainForm
@@ -208,6 +209,110 @@ namespace SideSlideAudio {
             }
         };
 
+        ref class CustomRenderer : ToolStripSystemRenderer
+        {
+        protected:
+            virtual void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs^ e) override
+            {
+                if (dynamic_cast<System::Windows::Forms::ToolStripMenuItem^>(e->Item) != nullptr)
+                {
+                    if (e->Item->Selected)
+                    {
+                        if (e->Item->Enabled)
+                        {
+                            e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(68, 71, 77)), e->Item->ContentRectangle);
+                        }
+                        else
+                        {
+                            e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(37, 45, 50)), e->Item->ContentRectangle);
+                        }
+                    }
+                    else
+                    {
+                        e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(37, 45, 50)), e->Item->ContentRectangle); // Фон для невыбранных элементов
+                    }
+                }
+                else
+                {
+                    ToolStripSystemRenderer::OnRenderMenuItemBackground(e);
+                }
+            }
+
+            virtual void OnRenderToolStripBorder(ToolStripRenderEventArgs^ e) override
+            {
+                ToolStrip^ toolStrip = e->ToolStrip;
+                Graphics^ g = e->Graphics;
+
+                // Определяем цвет рамки
+                Color borderColor = Color::FromArgb(68, 71, 77);
+
+                // Рисуем верхнюю рамку
+                g->FillRectangle(gcnew SolidBrush(borderColor), 0, 0, toolStrip->Width, 1);
+
+                // Рисуем нижнюю рамку
+                g->FillRectangle(gcnew SolidBrush(borderColor), 0, toolStrip->Height - 1, toolStrip->Width, 1);
+
+                // Рисуем левую рамку
+                g->FillRectangle(gcnew SolidBrush(borderColor), 0, 0, 1, toolStrip->Height);
+
+                // Рисуем правую рамку
+                g->FillRectangle(gcnew SolidBrush(borderColor), toolStrip->Width - 1, 0, 1, toolStrip->Height);
+            }
+
+
+
+
+            virtual void OnRenderItemText(ToolStripItemTextRenderEventArgs^ e) override
+            {
+                SideSlideAudio::Size textSize = TextRenderer::MeasureText(e->Text, e->TextFont);
+                SideSlideAudio::Rectangle textRect = e->TextRectangle;
+                textRect.Y = (e->Item->Height - textSize.Height) / 2;
+                e->TextRectangle = textRect;
+
+                ToolStripSystemRenderer::OnRenderItemText(e);
+            }
+
+            virtual void OnRenderToolStripBackground(ToolStripRenderEventArgs^ e) override
+            {
+
+                if (dynamic_cast<System::Windows::Forms::ContextMenuStrip^>(e->ToolStrip) != nullptr)
+                {
+                    e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(37, 45, 50)), e->AffectedBounds); // Фон для всего контекстного меню
+                }
+
+                if (dynamic_cast<ToolStrip^>(e->ToolStrip) != nullptr)
+                {
+                    SetRoundedRegion((ToolStrip^)e->ToolStrip);
+                }
+
+                ToolStripSystemRenderer::OnRenderToolStripBackground(e);
+            }
+
+        private:
+            void SetRoundedRegion(ToolStrip^ toolStrip)
+            {
+                /*Drawing::Drawing2D::GraphicsPath^ path = gcnew Drawing::Drawing2D::GraphicsPath();
+                int cornerRadius = 10;
+                int width = toolStrip->Width;
+                int height = toolStrip->Height;
+
+                path->StartFigure();
+                path->AddArc(0, 0, cornerRadius, cornerRadius, 180, 90);
+                path->AddLine(cornerRadius, 0, width - cornerRadius, 0);
+                path->AddArc(width - cornerRadius, 0, cornerRadius, cornerRadius, 270, 90);
+                path->AddLine(width, cornerRadius, width, height - cornerRadius);
+                path->AddArc(width - cornerRadius, height - cornerRadius, cornerRadius, cornerRadius, 0, 90);
+                path->AddLine(width - cornerRadius, height, cornerRadius, height);
+                path->AddArc(0, height - cornerRadius, cornerRadius, cornerRadius, 90, 90);
+                path->AddLine(0, height - cornerRadius, 0, cornerRadius);
+                path->CloseFigure();
+
+                toolStrip->Region = gcnew Drawing::Region(path);*/
+            }
+        };
+
+
+
 	public:
 		MainForm(void)
 		{
@@ -238,8 +343,22 @@ private: System::Windows::Forms::NotifyIcon^ InTray;
 private: System::Windows::Forms::Timer^ ShowThis;
 private: System::Windows::Forms::Timer^ HideThis;
 private: System::Windows::Forms::ContextMenuStrip^ MainTray;
-private: System::Windows::Forms::ToolStripMenuItem^ Item1;
-private: System::Windows::Forms::ToolStripMenuItem^ Item2;
+private: System::Windows::Forms::ToolStripMenuItem^ Push;
+private: System::Windows::Forms::ToolStripMenuItem^ Settings;
+
+
+private: System::Windows::Forms::ToolStripMenuItem^ Start;
+private: System::Windows::Forms::ToolStripSeparator^ SepStart;
+private: System::Windows::Forms::ToolStripMenuItem^ CloseIt;
+private: System::Windows::Forms::ToolStripMenuItem^ CSide;
+private: System::Windows::Forms::ToolStripMenuItem^ Device;
+private: System::Windows::Forms::ToolStripMenuItem^ Right;
+private: System::Windows::Forms::ToolStripMenuItem^ Left;
+
+
+
+
+
 
 
 
@@ -269,8 +388,15 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
             this->ShowIt = (gcnew System::Windows::Forms::Timer(this->components));
             this->InTray = (gcnew System::Windows::Forms::NotifyIcon(this->components));
             this->MainTray = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
-            this->Item1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
-            this->Item2 = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Start = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->SepStart = (gcnew System::Windows::Forms::ToolStripSeparator());
+            this->Push = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Settings = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->CSide = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Right = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Left = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Device = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->CloseIt = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->ShowThis = (gcnew System::Windows::Forms::Timer(this->components));
             this->HideThis = (gcnew System::Windows::Forms::Timer(this->components));
             this->MainTray->SuspendLayout();
@@ -310,26 +436,135 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
             // 
             // MainTray
             // 
-            this->MainTray->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->Item1, this->Item2 });
+            this->MainTray->AccessibleRole = System::Windows::Forms::AccessibleRole::MenuBar;
+            this->MainTray->AutoSize = false;
+            this->MainTray->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->MainTray->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->MainTray->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
+                this->Start, this->SepStart,
+                    this->Push, this->Settings, this->CloseIt
+            });
             this->MainTray->Name = L"MainTray";
-            this->MainTray->Size = System::Drawing::Size(181, 48);
+            this->MainTray->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
+            this->MainTray->ShowImageMargin = false;
+            this->MainTray->Size = System::Drawing::Size(180, 133);
             this->MainTray->Closing += gcnew System::Windows::Forms::ToolStripDropDownClosingEventHandler(this, &MainForm::MainTray_Closing);
+            this->MainTray->Opening += gcnew System::ComponentModel::CancelEventHandler(this, &MainForm::MainTray_Opening);
             // 
-            // Item1
+            // Start
             // 
-            this->Item1->Checked = true;
-            this->Item1->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->Item1->Name = L"Item1";
-            this->Item1->Size = System::Drawing::Size(180, 22);
-            this->Item1->Text = L"toolStripMenuItem1";
-            this->Item1->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item1_MouseDown);
+            this->Start->AutoSize = false;
+            this->Start->Enabled = false;
+            this->Start->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->Start->ForeColor = System::Drawing::Color::Silver;
+            this->Start->Name = L"Start";
+            this->Start->Padding = System::Windows::Forms::Padding(0);
+            this->Start->Size = System::Drawing::Size(180, 35);
+            this->Start->Text = L"     SideSlide Audio";
+            this->Start->TextDirection = System::Windows::Forms::ToolStripTextDirection::Horizontal;
             // 
-            // Item2
+            // SepStart
             // 
-            this->Item2->Name = L"Item2";
-            this->Item2->Size = System::Drawing::Size(180, 22);
-            this->Item2->Text = L"toolStripMenuItem2";
-            this->Item2->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item2_MouseDown);
+            this->SepStart->AutoSize = false;
+            this->SepStart->ForeColor = System::Drawing::SystemColors::ActiveCaption;
+            this->SepStart->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->SepStart->Name = L"SepStart";
+            this->SepStart->Size = System::Drawing::Size(176, 6);
+            // 
+            // Push
+            // 
+            this->Push->AutoSize = false;
+            this->Push->Checked = true;
+            this->Push->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->Push->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->Push->ForeColor = System::Drawing::Color::Silver;
+            this->Push->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->Push->Name = L"Push";
+            this->Push->Padding = System::Windows::Forms::Padding(0);
+            this->Push->Size = System::Drawing::Size(180, 35);
+            this->Push->Text = L"Закріпити";
+            this->Push->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item1_MouseDown);
+            // 
+            // Settings
+            // 
+            this->Settings->AutoSize = false;
+            this->Settings->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->Settings->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->CSide, this->Device });
+            this->Settings->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->Settings->ForeColor = System::Drawing::Color::Silver;
+            this->Settings->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->Settings->Name = L"Settings";
+            this->Settings->Padding = System::Windows::Forms::Padding(0);
+            this->Settings->Size = System::Drawing::Size(180, 35);
+            this->Settings->Text = L"Налаштування    ";
+            this->Settings->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            this->Settings->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item2_MouseDown);
+            // 
+            // CSide
+            // 
+            this->CSide->AutoSize = false;
+            this->CSide->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->CSide->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->Right, this->Left });
+            this->CSide->ForeColor = System::Drawing::Color::Silver;
+            this->CSide->Name = L"CSide";
+            this->CSide->Padding = System::Windows::Forms::Padding(0);
+            this->CSide->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->CSide->Size = System::Drawing::Size(179, 35);
+            this->CSide->Text = L"Розміщення  ";
+            this->CSide->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // Right
+            // 
+            this->Right->AutoSize = false;
+            this->Right->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->Right->ForeColor = System::Drawing::Color::Silver;
+            this->Right->Name = L"Right";
+            this->Right->Size = System::Drawing::Size(175, 35);
+            this->Right->Text = L"Праворуч     ";
+            // 
+            // Left
+            // 
+            this->Left->AutoSize = false;
+            this->Left->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->Left->ForeColor = System::Drawing::Color::Silver;
+            this->Left->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->Left->Name = L"Left";
+            this->Left->Size = System::Drawing::Size(175, 35);
+            this->Left->Text = L"Ліворуч";
+            // 
+            // Device
+            // 
+            this->Device->AutoSize = false;
+            this->Device->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->Device->ForeColor = System::Drawing::Color::Silver;
+            this->Device->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->Device->Name = L"Device";
+            this->Device->Padding = System::Windows::Forms::Padding(0);
+            this->Device->Size = System::Drawing::Size(179, 35);
+            this->Device->Text = L"Вивід";
+            // 
+            // CloseIt
+            // 
+            this->CloseIt->AutoSize = false;
+            this->CloseIt->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->CloseIt->ForeColor = System::Drawing::Color::Silver;
+            this->CloseIt->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->CloseIt->Name = L"CloseIt";
+            this->CloseIt->Padding = System::Windows::Forms::Padding(0);
+            this->CloseIt->Size = System::Drawing::Size(180, 35);
+            this->CloseIt->Text = L"Закрити";
+            this->CloseIt->Click += gcnew System::EventHandler(this, &MainForm::CloseIt_Click);
             // 
             // ShowThis
             // 
@@ -369,7 +604,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
 
     bool Over = false;
 
-    bool Side = false;
+    bool Side = true;
 
     cli::array<TSC^>^ TrigNam = gcnew cli::array<TSC^>(100);
 
@@ -933,6 +1168,10 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
     int OldRight = 0;
 
 	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
+        MainTray->Renderer = gcnew CustomRenderer();
+        Settings->DropDownDirection = ToolStripDropDownDirection::Left;
+        CSide->DropDownDirection = ToolStripDropDownDirection::Left;
+        SepStart->Enabled = false; 
         System::Type^ controlType = System::Windows::Forms::Control::typeid;
         controlType->InvokeMember("DoubleBuffered",
             System::Reflection::BindingFlags::SetProperty | System::Reflection::BindingFlags::Instance | System::Reflection::BindingFlags::NonPublic,
@@ -976,6 +1215,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
 	}
 
 	private: System::Void MainForm_Shown(System::Object^ sender, System::EventArgs^ e) {
+
 	}
 
 	void SetMiddle() {
@@ -1000,14 +1240,6 @@ private: System::Windows::Forms::ToolStripMenuItem^ Item2;
     cli::array<LPB^>^ LC = gcnew cli::array<LPB^>(100);
 
     void Open() {
-
-        /*Vol1->Controls->Add(this->Loud1);
-        Loud1->Controls->Add(this->Tst1);
-        Tst1->Location = System::Drawing::Point(14, 14);
-        Tst1->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Main::pictureBox1_MouseWheel);
-
-        ExtractIconAndSetImage(Icons[1], Tst1);*/
-
         for (int i = 0; i < CountOfSeanse; i++) {
 
             TrigNam[i] = gcnew TSC();
@@ -1338,14 +1570,28 @@ private: System::Void MainTray_Closing(System::Object^ sender, System::Windows::
     }
 }
 private: System::Void Item1_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-    keepOpen = true;
-    Item1->Checked = true;
-    Item2->Checked = false;
+
 }
 private: System::Void Item2_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-    keepOpen = true;
-    Item2->Checked = true;
-    Item1->Checked = false;
+
+}
+private: System::Void CloseIt_Click(System::Object^ sender, System::EventArgs^ e) {
+    Application::Exit();
+}
+private: System::Void MainTray_Opening(System::Object^ sender, System::ComponentModel::CancelEventArgs^ e) {
+    
+}
+
+private: System::Void Settings_DropDownOpening(System::Object^ sender, System::EventArgs^ e) {
+    ToolStripMenuItem^ menuItem = dynamic_cast<ToolStripMenuItem^>(sender);
+    if (menuItem != nullptr)
+    {
+        ToolStripDropDown^ dropDown = menuItem->DropDown;
+        if (dropDown != nullptr)
+        {
+            dropDown->BackColor = Color::FromArgb(37, 45, 50);
+        }
+    }
 }
 };
 }
