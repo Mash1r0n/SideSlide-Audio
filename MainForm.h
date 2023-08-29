@@ -243,24 +243,16 @@ namespace SideSlideAudio {
                 ToolStrip^ toolStrip = e->ToolStrip;
                 Graphics^ g = e->Graphics;
 
-                // Îïðåäåëÿåì öâåò ðàìêè
                 Color borderColor = Color::FromArgb(68, 71, 77);
 
-                // Ðèñóåì âåðõíþþ ðàìêó
                 g->FillRectangle(gcnew SolidBrush(borderColor), 0, 0, toolStrip->Width, 1);
 
-                // Ðèñóåì íèæíþþ ðàìêó
                 g->FillRectangle(gcnew SolidBrush(borderColor), 0, toolStrip->Height - 1, toolStrip->Width, 1);
 
-                // Ðèñóåì ëåâóþ ðàìêó
                 g->FillRectangle(gcnew SolidBrush(borderColor), 0, 0, 1, toolStrip->Height);
 
-                // Ðèñóåì ïðàâóþ ðàìêó
                 g->FillRectangle(gcnew SolidBrush(borderColor), toolStrip->Width - 1, 0, 1, toolStrip->Height);
             }
-
-
-
 
             virtual void OnRenderItemText(ToolStripItemTextRenderEventArgs^ e) override
             {
@@ -277,7 +269,7 @@ namespace SideSlideAudio {
 
                 if (dynamic_cast<System::Windows::Forms::ContextMenuStrip^>(e->ToolStrip) != nullptr)
                 {
-                    e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(37, 45, 50)), e->AffectedBounds); // Ôîí äëÿ âñåãî êîíòåêñòíîãî ìåíþ
+                    e->Graphics->FillRectangle(gcnew SolidBrush(Color::FromArgb(37, 45, 50)), e->AffectedBounds);
                 }
 
                 if (dynamic_cast<ToolStrip^>(e->ToolStrip) != nullptr)
@@ -354,6 +346,57 @@ private: System::Windows::Forms::ToolStripMenuItem^ CSide;
 private: System::Windows::Forms::ToolStripMenuItem^ Device;
 private: System::Windows::Forms::ToolStripMenuItem^ Right;
 private: System::Windows::Forms::ToolStripMenuItem^ Left;
+private: System::Windows::Forms::ToolStripMenuItem^ ChangeColor;
+private: System::Windows::Forms::ToolStripMenuItem^ BKG;
+private: System::Windows::Forms::ToolStripMenuItem^ INDLOUD;
+private: System::Windows::Forms::ToolStripMenuItem^ INDVOLUME;
+private: System::Windows::Forms::ToolStripMenuItem^ SYSICON;
+
+
+
+private: System::Windows::Forms::ToolStripMenuItem^ SHOWLOUD;
+private: System::Windows::Forms::ToolStripMenuItem^ RELEU;
+
+private: System::Windows::Forms::ToolStripMenuItem^ RELLOUD;
+private: System::Windows::Forms::ToolStripMenuItem^ CHANGEVOL;
+private: System::Windows::Forms::ToolStripMenuItem^ RealTime;
+private: System::Windows::Forms::ToolStripMenuItem^ AfterUp;
+
+
+private: System::Windows::Forms::ToolStripMenuItem^ HOTKEYS;
+private: System::Windows::Forms::ToolStripMenuItem^ UAP;
+private: System::Windows::Forms::ToolStripMenuItem^ DAP;
+private: System::Windows::Forms::ToolStripMenuItem^ LUN;
+private: System::Windows::Forms::ToolStripMenuItem^ óêðà¿íñüêàToolStripMenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^ englishToolStripMenuItem;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private: System::Windows::Forms::ToolStripMenuItem^ WINDOWSRUN;
+
+
+
+
+
+
 
 
 
@@ -396,9 +439,27 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
             this->Right = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->Left = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->Device = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->ChangeColor = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->BKG = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->INDLOUD = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->INDVOLUME = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->SYSICON = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->SHOWLOUD = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->RELEU = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->RELLOUD = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->CHANGEVOL = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->RealTime = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->AfterUp = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->HOTKEYS = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->UAP = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->DAP = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->LUN = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->óêðà¿íñüêàToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->englishToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->CloseIt = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->ShowThis = (gcnew System::Windows::Forms::Timer(this->components));
             this->HideThis = (gcnew System::Windows::Forms::Timer(this->components));
+            this->WINDOWSRUN = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->MainTray->SuspendLayout();
             this->SuspendLayout();
             // 
@@ -494,7 +555,10 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
             this->Settings->AutoSize = false;
             this->Settings->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
                 static_cast<System::Int32>(static_cast<System::Byte>(50)));
-            this->Settings->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->CSide, this->Device });
+            this->Settings->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(9) {
+                this->CSide, this->Device,
+                    this->ChangeColor, this->SHOWLOUD, this->CHANGEVOL, this->HOTKEYS, this->SYSICON, this->WINDOWSRUN, this->LUN
+            });
             this->Settings->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(204)));
             this->Settings->ForeColor = System::Drawing::Color::Silver;
@@ -516,7 +580,7 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
             this->CSide->Name = L"CSide";
             this->CSide->Padding = System::Windows::Forms::Padding(0);
             this->CSide->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->CSide->Size = System::Drawing::Size(179, 35);
+            this->CSide->Size = System::Drawing::Size(219, 35);
             this->CSide->Text = L"Ðîçì³ùåííÿ  ";
             this->CSide->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
             // 
@@ -550,8 +614,208 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
             this->Device->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
             this->Device->Name = L"Device";
             this->Device->Padding = System::Windows::Forms::Padding(0);
-            this->Device->Size = System::Drawing::Size(179, 35);
+            this->Device->Size = System::Drawing::Size(219, 35);
             this->Device->Text = L"Âèâ³ä";
+            // 
+            // ChangeColor
+            // 
+            this->ChangeColor->AutoSize = false;
+            this->ChangeColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->ChangeColor->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {
+                this->BKG, this->INDLOUD,
+                    this->INDVOLUME
+            });
+            this->ChangeColor->ForeColor = System::Drawing::Color::Silver;
+            this->ChangeColor->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->ChangeColor->Name = L"ChangeColor";
+            this->ChangeColor->Size = System::Drawing::Size(219, 35);
+            this->ChangeColor->Text = L"Êîë³ð";
+            this->ChangeColor->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // BKG
+            // 
+            this->BKG->AutoSize = false;
+            this->BKG->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->BKG->ForeColor = System::Drawing::Color::Silver;
+            this->BKG->Name = L"BKG";
+            this->BKG->Padding = System::Windows::Forms::Padding(0);
+            this->BKG->Size = System::Drawing::Size(216, 35);
+            this->BKG->Text = L"Çàäí³é ôîí";
+            // 
+            // INDLOUD
+            // 
+            this->INDLOUD->AutoSize = false;
+            this->INDLOUD->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->INDLOUD->ForeColor = System::Drawing::Color::Silver;
+            this->INDLOUD->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->INDLOUD->Name = L"INDLOUD";
+            this->INDLOUD->Padding = System::Windows::Forms::Padding(0);
+            this->INDLOUD->Size = System::Drawing::Size(216, 35);
+            this->INDLOUD->Text = L"²íäèêàòîð øóìó";
+            // 
+            // INDVOLUME
+            // 
+            this->INDVOLUME->AutoSize = false;
+            this->INDVOLUME->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->INDVOLUME->ForeColor = System::Drawing::Color::Silver;
+            this->INDVOLUME->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->INDVOLUME->Name = L"INDVOLUME";
+            this->INDVOLUME->Padding = System::Windows::Forms::Padding(0);
+            this->INDVOLUME->Size = System::Drawing::Size(216, 35);
+            this->INDVOLUME->Text = L"²íäèêàòîð ãó÷íîñò³";
+            // 
+            // SYSICON
+            // 
+            this->SYSICON->AutoSize = false;
+            this->SYSICON->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->SYSICON->ForeColor = System::Drawing::Color::Silver;
+            this->SYSICON->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->SYSICON->Name = L"SYSICON";
+            this->SYSICON->Size = System::Drawing::Size(219, 35);
+            this->SYSICON->Text = L"Çíà÷îê ñèñòåìè";
+            // 
+            // SHOWLOUD
+            // 
+            this->SHOWLOUD->AutoSize = false;
+            this->SHOWLOUD->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->SHOWLOUD->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->RELEU, this->RELLOUD });
+            this->SHOWLOUD->ForeColor = System::Drawing::Color::Silver;
+            this->SHOWLOUD->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->SHOWLOUD->Name = L"SHOWLOUD";
+            this->SHOWLOUD->Size = System::Drawing::Size(219, 35);
+            this->SHOWLOUD->Text = L"Ïîêàç øóìó";
+            this->SHOWLOUD->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // RELEU
+            // 
+            this->RELEU->AutoSize = false;
+            this->RELEU->ForeColor = System::Drawing::Color::Silver;
+            this->RELEU->Name = L"RELEU";
+            this->RELEU->Size = System::Drawing::Size(210, 35);
+            this->RELEU->Text = L"Â³äíîñíî 0";
+            // 
+            // RELLOUD
+            // 
+            this->RELLOUD->AutoSize = false;
+            this->RELLOUD->ForeColor = System::Drawing::Color::Silver;
+            this->RELLOUD->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->RELLOUD->Name = L"RELLOUD";
+            this->RELLOUD->Size = System::Drawing::Size(210, 35);
+            this->RELLOUD->Text = L"Â³äíîñíî ãó÷íîñò³";
+            // 
+            // CHANGEVOL
+            // 
+            this->CHANGEVOL->AutoSize = false;
+            this->CHANGEVOL->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->CHANGEVOL->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+                this->RealTime,
+                    this->AfterUp
+            });
+            this->CHANGEVOL->ForeColor = System::Drawing::Color::Silver;
+            this->CHANGEVOL->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->CHANGEVOL->Name = L"CHANGEVOL";
+            this->CHANGEVOL->Size = System::Drawing::Size(219, 35);
+            this->CHANGEVOL->Text = L"Çì³íà ãó÷íîñò³";
+            this->CHANGEVOL->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // RealTime
+            // 
+            this->RealTime->AutoSize = false;
+            this->RealTime->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->RealTime->ForeColor = System::Drawing::Color::Silver;
+            this->RealTime->Name = L"RealTime";
+            this->RealTime->Size = System::Drawing::Size(214, 35);
+            this->RealTime->Text = L"Ó ðåàëüíîìó ÷àñ³";
+            // 
+            // AfterUp
+            // 
+            this->AfterUp->AutoSize = false;
+            this->AfterUp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->AfterUp->ForeColor = System::Drawing::Color::Silver;
+            this->AfterUp->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->AfterUp->Name = L"AfterUp";
+            this->AfterUp->Size = System::Drawing::Size(214, 35);
+            this->AfterUp->Text = L"Ï³ñëÿ â³äïóñêàííÿ";
+            // 
+            // HOTKEYS
+            // 
+            this->HOTKEYS->AutoSize = false;
+            this->HOTKEYS->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->HOTKEYS->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->UAP, this->DAP });
+            this->HOTKEYS->ForeColor = System::Drawing::Color::Silver;
+            this->HOTKEYS->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->HOTKEYS->Name = L"HOTKEYS";
+            this->HOTKEYS->Size = System::Drawing::Size(219, 35);
+            this->HOTKEYS->Text = L"Ãàðÿ÷³ êëàâ³øè";
+            this->HOTKEYS->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // UAP
+            // 
+            this->UAP->AutoSize = false;
+            this->UAP->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->UAP->ForeColor = System::Drawing::Color::Silver;
+            this->UAP->Name = L"UAP";
+            this->UAP->Size = System::Drawing::Size(197, 35);
+            this->UAP->Text = L"Âãîðó ïî ïàíåë³";
+            // 
+            // DAP
+            // 
+            this->DAP->AutoSize = false;
+            this->DAP->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->DAP->ForeColor = System::Drawing::Color::Silver;
+            this->DAP->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->DAP->Name = L"DAP";
+            this->DAP->Size = System::Drawing::Size(197, 35);
+            this->DAP->Text = L"Óíèç ïî ïàíåë³";
+            // 
+            // LUN
+            // 
+            this->LUN->AutoSize = false;
+            this->LUN->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->LUN->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+                this->óêðà¿íñüêàToolStripMenuItem,
+                    this->englishToolStripMenuItem
+            });
+            this->LUN->ForeColor = System::Drawing::Color::Silver;
+            this->LUN->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->LUN->Name = L"LUN";
+            this->LUN->Size = System::Drawing::Size(219, 35);
+            this->LUN->Text = L"Ìîâà";
+            this->LUN->DropDownOpening += gcnew System::EventHandler(this, &MainForm::Settings_DropDownOpening);
+            // 
+            // óêðà¿íñüêàToolStripMenuItem
+            // 
+            this->óêðà¿íñüêàToolStripMenuItem->AutoSize = false;
+            this->óêðà¿íñüêàToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)),
+                static_cast<System::Int32>(static_cast<System::Byte>(45)), static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->óêðà¿íñüêàToolStripMenuItem->ForeColor = System::Drawing::Color::Silver;
+            this->óêðà¿íñüêàToolStripMenuItem->Name = L"óêðà¿íñüêàToolStripMenuItem";
+            this->óêðà¿íñüêàToolStripMenuItem->Size = System::Drawing::Size(180, 35);
+            this->óêðà¿íñüêàToolStripMenuItem->Text = L"Óêðà¿íñüêà";
+            // 
+            // englishToolStripMenuItem
+            // 
+            this->englishToolStripMenuItem->AutoSize = false;
+            this->englishToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)),
+                static_cast<System::Int32>(static_cast<System::Byte>(45)), static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->englishToolStripMenuItem->ForeColor = System::Drawing::Color::Silver;
+            this->englishToolStripMenuItem->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->englishToolStripMenuItem->Name = L"englishToolStripMenuItem";
+            this->englishToolStripMenuItem->Size = System::Drawing::Size(180, 35);
+            this->englishToolStripMenuItem->Text = L"English";
             // 
             // CloseIt
             // 
@@ -575,6 +839,17 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
             // 
             this->HideThis->Interval = 5;
             this->HideThis->Tick += gcnew System::EventHandler(this, &MainForm::HideThis_Tick);
+            // 
+            // WINDOWSRUN
+            // 
+            this->WINDOWSRUN->AutoSize = false;
+            this->WINDOWSRUN->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->WINDOWSRUN->ForeColor = System::Drawing::Color::Silver;
+            this->WINDOWSRUN->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->WINDOWSRUN->Name = L"WINDOWSRUN";
+            this->WINDOWSRUN->Size = System::Drawing::Size(219, 35);
+            this->WINDOWSRUN->Text = L"Çàïóñê ç ñèñòåìîþ";
             // 
             // MainForm
             // 
@@ -930,7 +1205,6 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
                 if (QueryFullProcessImageName(hProcess, 0, exePath, &exePathSize)) {
                     exePaths[i] = exePath;
 
-                    // Get the file name from the executable path
                     WCHAR fileName[MAX_PATH];
                     _wsplitpath_s(exePath, NULL, 0, NULL, 0, fileName, MAX_PATH, NULL, 0);
                     TrigNam[i]->SC = gcnew System::String(fileName);
@@ -960,24 +1234,19 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
         {
             Bitmap^ iconBitmap = nullptr;
 
-            // Ïîëó÷àåì ðàçìåð èêîíêè
             ICONINFO iconInfo;
             GetIconInfo(hIcon, &iconInfo);
             int iconWidth = iconInfo.xHotspot * 2;
             int iconHeight = iconInfo.yHotspot * 2;
 
-            // Ñîçäàåì Bitmap äëÿ ðàçìåùåíèÿ èçîáðàæåíèÿ èêîíêè
             iconBitmap = gcnew Bitmap(iconWidth, iconHeight, Imaging::PixelFormat::Format32bppArgb);
 
-            // Ðèñóåì èêîíêó íà Bitmap
             Graphics^ g = Graphics::FromImage(iconBitmap);
             g->DrawIcon(System::Drawing::Icon::FromHandle(IntPtr(hIcon)), System::Drawing::Rectangle(0, 0, iconWidth, iconHeight));
             delete g;
 
-            // Óñòàíàâëèâàåì èçîáðàæåíèå â PictureBox
             pictureBox->Image = iconBitmap;
 
-            // Îñâîáîæäàåì äåñêðèïòîð èêîíêè
             DestroyIcon(hIcon);
         }
         else {
@@ -1171,6 +1440,12 @@ private: System::Windows::Forms::ToolStripMenuItem^ Left;
         MainTray->Renderer = gcnew CustomRenderer();
         Settings->DropDownDirection = ToolStripDropDownDirection::Left;
         CSide->DropDownDirection = ToolStripDropDownDirection::Left;
+        ChangeColor->DropDownDirection = ToolStripDropDownDirection::Left;
+        SHOWLOUD->DropDownDirection = ToolStripDropDownDirection::Left;
+        CHANGEVOL->DropDownDirection = ToolStripDropDownDirection::Left;
+        HOTKEYS->DropDownDirection = ToolStripDropDownDirection::Left;
+        LUN->DropDownDirection = ToolStripDropDownDirection::Left;
+
         SepStart->Enabled = false; 
         System::Type^ controlType = System::Windows::Forms::Control::typeid;
         controlType->InvokeMember("DoubleBuffered",
@@ -1579,7 +1854,22 @@ private: System::Void CloseIt_Click(System::Object^ sender, System::EventArgs^ e
     Application::Exit();
 }
 private: System::Void MainTray_Opening(System::Object^ sender, System::ComponentModel::CancelEventArgs^ e) {
-    
+    System::Drawing::Point mousePosition = Control::MousePosition;
+
+    int menuWidth = MainTray->Width;
+    int menuHeight = MainTray->Height;
+
+    int newX = mousePosition.X - menuWidth + 90;
+    int newY = mousePosition.Y - menuHeight;
+
+    if (newX < 0) {
+        newX = 0;
+    }
+    if (newY < 0) {
+        newY = 0;
+    }
+
+    MainTray->Show(newX, newY);
 }
 
 private: System::Void Settings_DropDownOpening(System::Object^ sender, System::EventArgs^ e) {
