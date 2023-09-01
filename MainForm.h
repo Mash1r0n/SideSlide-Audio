@@ -45,6 +45,7 @@ namespace SideSlideAudio {
     using namespace System::Security;
     using namespace System::Drawing::Drawing2D;
     using namespace System::Runtime::InteropServices;
+    using namespace Microsoft::Win32;
 
 	/// <summary>
 	/// Сводка для MainForm
@@ -383,7 +384,8 @@ private: System::Windows::Forms::NotifyIcon^ InTray;
 private: System::Windows::Forms::Timer^ ShowThis;
 private: System::Windows::Forms::Timer^ HideThis;
 private: System::Windows::Forms::ContextMenuStrip^ MainTray;
-private: System::Windows::Forms::ToolStripMenuItem^ Push;
+private: System::Windows::Forms::ToolStripMenuItem^ Pin;
+
 private: System::Windows::Forms::ToolStripMenuItem^ Settings;
 private: System::Windows::Forms::ToolStripMenuItem^ Start;
 private: System::Windows::Forms::ToolStripSeparator^ SepStart;
@@ -473,8 +475,13 @@ private: System::Windows::Forms::ContextMenuStrip^ HKMenu;
 private: System::Windows::Forms::ToolStripMenuItem^ UpAcPan;
 private: System::Windows::Forms::ToolStripMenuItem^ DownAcPan;
 private: System::Windows::Forms::ContextMenuStrip^ LGMenu;
-private: System::Windows::Forms::ToolStripMenuItem^ toolStripMenuItem1;
-private: System::Windows::Forms::ToolStripMenuItem^ toolStripMenuItem2;
+private: System::Windows::Forms::ToolStripMenuItem^ UKRLan;
+
+private: System::Windows::Forms::ToolStripMenuItem^ ENGLan;
+
+
+
+
 private: System::Windows::Forms::ColorDialog^ SetColor;
 private: System::Windows::Forms::ContextMenuStrip^ ShowSysIcon;
 private: System::Windows::Forms::ToolStripMenuItem^ ShowThisIcon;
@@ -519,7 +526,7 @@ private: System::ComponentModel::IContainer^ components;
             this->MainTray = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
             this->Start = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->SepStart = (gcnew System::Windows::Forms::ToolStripSeparator());
-            this->Push = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->Pin = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->Settings = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->Setti = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
             this->SIDE = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -540,8 +547,8 @@ private: System::ComponentModel::IContainer^ components;
             this->ShowThisIcon = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->LUN = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->LGMenu = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
-            this->toolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
-            this->toolStripMenuItem2 = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->ENGLan = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->UKRLan = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->WINRUN = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->CloseIt = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->SVMenu = (gcnew System::Windows::Forms::ContextMenuStrip(this->components));
@@ -610,7 +617,7 @@ private: System::ComponentModel::IContainer^ components;
                 static_cast<System::Byte>(204)));
             this->MainTray->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
                 this->Start, this->SepStart,
-                    this->Push, this->Settings, this->CloseIt
+                    this->Pin, this->Settings, this->CloseIt
             });
             this->MainTray->Name = L"MainTray";
             this->MainTray->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
@@ -642,20 +649,19 @@ private: System::ComponentModel::IContainer^ components;
             this->SepStart->Name = L"SepStart";
             this->SepStart->Size = System::Drawing::Size(176, 6);
             // 
-            // Push
+            // Pin
             // 
-            this->Push->AutoSize = false;
-            this->Push->Checked = true;
-            this->Push->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->Push->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->Pin->AutoSize = false;
+            this->Pin->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(204)));
-            this->Push->ForeColor = System::Drawing::Color::Silver;
-            this->Push->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
-            this->Push->Name = L"Push";
-            this->Push->Padding = System::Windows::Forms::Padding(0);
-            this->Push->Size = System::Drawing::Size(180, 35);
-            this->Push->Text = L"Закріпити";
-            this->Push->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item1_MouseDown);
+            this->Pin->ForeColor = System::Drawing::Color::Silver;
+            this->Pin->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->Pin->Name = L"Pin";
+            this->Pin->Padding = System::Windows::Forms::Padding(0);
+            this->Pin->Size = System::Drawing::Size(180, 35);
+            this->Pin->Text = L"Закріпити";
+            this->Pin->Click += gcnew System::EventHandler(this, &MainForm::Pin_Click);
+            this->Pin->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &MainForm::Item1_MouseDown);
             // 
             // Settings
             // 
@@ -713,7 +719,6 @@ private: System::ComponentModel::IContainer^ components;
             this->PLA->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12));
             this->PLA->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->Rig, this->Lef });
             this->PLA->Name = L"PLA";
-            this->PLA->OwnerItem = this->SIDE;
             this->PLA->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
             this->PLA->ShowImageMargin = false;
             this->PLA->Size = System::Drawing::Size(156, 70);
@@ -916,7 +921,7 @@ private: System::ComponentModel::IContainer^ components;
             this->LGMenu->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
                 static_cast<System::Int32>(static_cast<System::Byte>(50)));
             this->LGMenu->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12));
-            this->LGMenu->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->toolStripMenuItem1, this->toolStripMenuItem2 });
+            this->LGMenu->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->ENGLan, this->UKRLan });
             this->LGMenu->Name = L"PLA";
             this->LGMenu->OwnerItem = this->LUN;
             this->LGMenu->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
@@ -924,37 +929,51 @@ private: System::ComponentModel::IContainer^ components;
             this->LGMenu->Size = System::Drawing::Size(180, 70);
             this->LGMenu->Closing += gcnew System::Windows::Forms::ToolStripDropDownClosingEventHandler(this, &MainForm::MainTray_Closing);
             // 
-            // toolStripMenuItem1
+            // ENGLan
             // 
-            this->toolStripMenuItem1->AutoSize = false;
-            this->toolStripMenuItem1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)),
-                static_cast<System::Int32>(static_cast<System::Byte>(45)), static_cast<System::Int32>(static_cast<System::Byte>(50)));
-            this->toolStripMenuItem1->ForeColor = System::Drawing::Color::Silver;
-            this->toolStripMenuItem1->Name = L"toolStripMenuItem1";
-            this->toolStripMenuItem1->Size = System::Drawing::Size(180, 35);
-            this->toolStripMenuItem1->Text = L"Українська";
+            this->ENGLan->AutoSize = false;
+            this->ENGLan->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->ENGLan->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->ENGLan->ForeColor = System::Drawing::Color::Silver;
+            this->ENGLan->Name = L"ENGLan";
+            this->ENGLan->Size = System::Drawing::Size(180, 35);
+            this->ENGLan->Text = L"English";
+            this->ENGLan->Click += gcnew System::EventHandler(this, &MainForm::ENGLan_Click);
             // 
-            // toolStripMenuItem2
+            // UKRLan
             // 
-            this->toolStripMenuItem2->AutoSize = false;
-            this->toolStripMenuItem2->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)),
-                static_cast<System::Int32>(static_cast<System::Byte>(45)), static_cast<System::Int32>(static_cast<System::Byte>(50)));
-            this->toolStripMenuItem2->ForeColor = System::Drawing::Color::Silver;
-            this->toolStripMenuItem2->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
-            this->toolStripMenuItem2->Name = L"toolStripMenuItem2";
-            this->toolStripMenuItem2->Size = System::Drawing::Size(180, 35);
-            this->toolStripMenuItem2->Text = L"English";
+            this->UKRLan->AutoSize = false;
+            this->UKRLan->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->UKRLan->Checked = true;
+            this->UKRLan->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->UKRLan->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
+            this->UKRLan->ForeColor = System::Drawing::Color::Silver;
+            this->UKRLan->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
+            this->UKRLan->Name = L"UKRLan";
+            this->UKRLan->Size = System::Drawing::Size(180, 35);
+            this->UKRLan->Text = L"Українська";
+            this->UKRLan->Click += gcnew System::EventHandler(this, &MainForm::UKRLan_Click);
             // 
             // WINRUN
             // 
             this->WINRUN->AutoSize = false;
             this->WINRUN->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(37)), static_cast<System::Int32>(static_cast<System::Byte>(45)),
                 static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->WINRUN->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
+            this->WINRUN->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(204)));
             this->WINRUN->ForeColor = System::Drawing::Color::Silver;
             this->WINRUN->Margin = System::Windows::Forms::Padding(0, -4, 0, 0);
             this->WINRUN->Name = L"WINRUN";
             this->WINRUN->Size = System::Drawing::Size(195, 35);
             this->WINRUN->Text = L"Запуск з системою";
+            this->WINRUN->TextImageRelation = System::Windows::Forms::TextImageRelation::TextAboveImage;
+            this->WINRUN->CheckedChanged += gcnew System::EventHandler(this, &MainForm::WINRUN_CheckedChanged);
+            this->WINRUN->Click += gcnew System::EventHandler(this, &MainForm::WINRUN_Click);
             // 
             // CloseIt
             // 
@@ -1103,15 +1122,25 @@ private: System::ComponentModel::IContainer^ components;
 
         }
 #pragma endregion
+
+    String^ exePath = Application::ExecutablePath;
+    String^ ISP = "sys.png";
+    String^ ResultISP = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(exePath), ISP);
+    /*String^ ResultISP = ISP;*/
+
     //Данные в конфиг
     int Side = 1;
     String^ BKGCol = "#1F2327";
-    String^ LOUCol = "#404214";
+    String^ LOUCol = "#A9A9AC";
     String^ VOLCol = "#ECF549";
     String^ ButtonUp = "W";
     String^ ButtonDown = "S";
-    String^ SysImagePath = "sys.png";
+    String^ SysImagePath = ResultISP;
+    int Lun = 1;
     //Конец записи данных
+    String^ cfgFileName = "Config.cfgsa";
+    String^ cfgFilePath = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(exePath), cfgFileName);
+    /*String^ cfgFilePath = cfgFileName;*/
 
     int CountOfSeanse = 0;
     int OldCount = 0;
@@ -1675,6 +1704,46 @@ private: System::ComponentModel::IContainer^ components;
         start = false;
     }
 
+    void ToUkr() {
+        this->Pin->Text = L"Закріпити";
+        this->Settings->Text = L"Налаштування    ";
+        this->SIDE->Text = L"Розміщення  ";
+        this->Rig->Text = L"Праворуч     ";
+        this->Lef->Text = L"Ліворуч";
+        this->CHGCOLOR->Text = L"Колір";
+        this->BKG->Text = L"Задній фон";
+        this->LOU->Text = L"Індикатор шуму";
+        this->VOL->Text = L"Індикатор гучності";
+        this->HOTKEYS->Text = L"Гарячі клавіши";
+        this->UpAcPan->Text = "Вгору по панелі - " + ButtonUp;
+        this->DownAcPan->Text = L"Униз по панелі - " + ButtonDown;
+        this->SYSICON->Text = L"Значок системи";
+        this->LUN->Text = L"Мова";
+        this->WINRUN->Text = L"Запуск з системою";
+        this->CloseIt->Text = L"Закрити";
+        Setti->Size = System::Drawing::Size(195, 191);
+    }
+
+    void ToEng() {
+        this->Pin->Text = L"Pin";
+        this->Settings->Text = L"Settings    ";
+        this->SIDE->Text = L"Placement  ";
+        this->Rig->Text = L"Right     ";
+        this->Lef->Text = L"Left";
+        this->CHGCOLOR->Text = L"Color";
+        this->BKG->Text = L"Background";
+        this->LOU->Text = L"Noise indicator";
+        this->VOL->Text = L"Volume indicator";
+        this->HOTKEYS->Text = L"Hotkeys";
+        this->UpAcPan->Text = L"Up the panel - " + ButtonUp;
+        this->DownAcPan->Text = L"Down the panel - " + ButtonDown;
+        this->SYSICON->Text = L"System icon";
+        this->LUN->Text = L"Language";
+        this->WINRUN->Text = L"Run with system";
+        this->CloseIt->Text = L"Close";
+        Setti->Size = System::Drawing::Size(175, 191);
+    }
+
     cli::array<String^>^ GetDevices()
     {
         static PROPERTYKEY key;
@@ -1734,11 +1803,14 @@ private: System::ComponentModel::IContainer^ components;
 
     //Применим настройки
     void UpdCfg() {
-        //Положение
         if (Side) {
+            Rig->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+            Lef->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
             Rig->Checked = true;
         }
         else {
+            Lef->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+            Rig->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
             Lef->Checked = true;
         }
 
@@ -1763,20 +1835,35 @@ private: System::ComponentModel::IContainer^ components;
         delete g;
         VOL->Image = iconBitmap;
         
-        UpAcPan->Text = "Вгору по панелі - " + ButtonUp;
-        DownAcPan->Text = "Униз по панелі - " + ButtonDown;
+        if (Lun) {
+            ToEng();
+            ENGLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+            UKRLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+            ENGLan->Checked = true;
+        }
+        else {
+            ToUkr();
+            UKRLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+            ENGLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+            UKRLan->Checked = true;
+        }
+
+        UpAcPan->Text = ((!Lun) ? "Вгору по панелі - " : "Up the panel - ") + ButtonUp;
+        DownAcPan->Text = ((!Lun) ? "Вгору по панелі - " : "Down the panel - ") + ButtonDown;
 
         Bitmap^ originalBitmap = gcnew Bitmap(SysImagePath);
         Bitmap^ resizedBitmap = gcnew Bitmap(originalBitmap, 31, 31);
         ShowThisIcon->Image = resizedBitmap;
+
     }
 
     //Прочитаем настройки
     void FromCfg() {
-        fstream open("Config.cfgsa", ios::in);
+        fstream open((const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(cfgFilePath)).ToPointer(), ios::in);
         if (open) {
             if (open.peek() == std::ifstream::traits_type::eof()) {
-                return; //Пусто
+                ToCfg();
+                UpdCfg();
             }
             string temp;
             getline(open, temp);
@@ -1793,18 +1880,21 @@ private: System::ComponentModel::IContainer^ components;
             ButtonDown = marshal_as<String^>(temp);
             getline(open, temp);
             SysImagePath = marshal_as<String^>(temp);
+            getline(open, temp);
+            Lun = stoi(temp);
             open.close();
             UpdCfg();
         }
         else {
             //Нет такого файла
-            return;
+            ToCfg();
+            UpdCfg();
         }
     }
 
     //Запишем настройки
     void ToCfg() {
-        fstream open("Config.cfgsa", ios::out);
+        fstream open((const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(cfgFilePath)).ToPointer(), ios::out);
         open << Side << endl;
         open << (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(BKGCol)).ToPointer() << endl;
         open << (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(LOUCol)).ToPointer() << endl;
@@ -1812,8 +1902,8 @@ private: System::ComponentModel::IContainer^ components;
         open << (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(ButtonUp)).ToPointer() << endl;
         open << (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(ButtonDown)).ToPointer() << endl;
         open << (const char*)(Runtime::InteropServices::Marshal::StringToHGlobalAnsi(SysImagePath)).ToPointer() << endl;
+        open << Lun << endl;
         open.close();
-        UpdCfg();
     }
 
     //УнИкаЛьНАя функция для рисования фона
@@ -1829,7 +1919,12 @@ private: System::ComponentModel::IContainer^ components;
     }
 
 	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
-        FromCfg();
+        try {
+            FromCfg();
+        }
+        catch (...) {
+            Application::Exit();
+        }
 
         Devices = GetDevices();
         MainTray->Renderer = gcnew CustomRenderer();
@@ -1869,7 +1964,8 @@ private: System::ComponentModel::IContainer^ components;
         OldWidth = screenBounds.Width;
         OldRight = screenBounds.Right;
 
-        ShowSysIcon->BackgroundImage = gcnew Bitmap("Resources\\SSA_Ava.png");
+        bool isChecked = IsStartupEnabledSaved();
+        WINRUN->Checked = isChecked || IsStartupEnabled();
 	}
 
 	void SetRegion()
@@ -1994,10 +2090,6 @@ void UV() {
 }
 
 private: System::Void pictureBox1_MouseWheel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-    if ((Control::ModifierKeys & Keys::Control) != Keys::Control) {
-        return;
-    }
-
     PictureBox^ TB = safe_cast<PictureBox^>(sender);
 
     int ind = System::Convert::ToInt32(TB->Name->Substring(4));
@@ -2243,7 +2335,14 @@ private: System::Void MainForm_KeyDown(System::Object^ sender, System::Windows::
 
 private: System::Void MainTray_Closing(System::Object^ sender, System::Windows::Forms::ToolStripDropDownClosingEventArgs^ e) {
     e->Cancel = false;
-    if ((e->CloseReason == ToolStripDropDownCloseReason::ItemClicked || e->CloseReason == ToolStripDropDownCloseReason::AppClicked) && ExitClickedItem->Name != "CloseIt")
+    String^ ForNullSit;
+    try {
+        ForNullSit = ExitClickedItem->Name;
+    }
+    catch (...) {
+        ForNullSit = "NoNoNo";
+    }
+    if ((e->CloseReason == ToolStripDropDownCloseReason::ItemClicked || e->CloseReason == ToolStripDropDownCloseReason::AppClicked) && ForNullSit != "CloseIt")
     {
         e->Cancel = true;
     }
@@ -2289,6 +2388,8 @@ private: System::Void Settings_DropDownOpening(System::Object^ sender, System::E
 }
 private: System::Void Right_Click(System::Object^ sender, System::EventArgs^ e) {
     if (!Side) {
+        Rig->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+        Lef->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
         Rig->Checked = true;
         Lef->Checked = false;
         Side = true;
@@ -2301,6 +2402,8 @@ private: System::Void Right_Click(System::Object^ sender, System::EventArgs^ e) 
 }
 private: System::Void Left_Click(System::Object^ sender, System::EventArgs^ e) {
     if (Side) {
+        Lef->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+        Rig->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
         Rig->Checked = false;
         Lef->Checked = true;
         Side = false;
@@ -2375,7 +2478,7 @@ private: System::Void HKMenu_PreviewKeyDown(System::Object^ sender, System::Wind
         if (e->KeyCode != static_cast<Keys>(Enum::Parse(Keys::typeid, ButtonDown))) {
             Keys^ temp = e->KeyCode;
             ButtonUp = temp->ToString();
-            UpAcPan->Text = "Вгору по панелі - " + ButtonUp;
+            UpAcPan->Text = ((!Lun) ? "Вгору по панелі - " : "Up the panel - ") + ButtonUp;
             UpAcPan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
             act1 = false;
             act2 = false;
@@ -2390,7 +2493,7 @@ private: System::Void HKMenu_PreviewKeyDown(System::Object^ sender, System::Wind
         if (e->KeyCode != static_cast<Keys>(Enum::Parse(Keys::typeid, ButtonUp))) {
             Keys^ temp = e->KeyCode;
             ButtonDown = temp->ToString();
-            DownAcPan->Text = "Униз по панелі - " + ButtonDown;
+            DownAcPan->Text = ((!Lun) ? "Вгору по панелі - " : "Down the panel - ") + ButtonDown;
             DownAcPan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
             act1 = false;
             act2 = false;
@@ -2432,6 +2535,78 @@ private: System::Void SYSICON_Click(System::Object^ sender, System::EventArgs^ e
 }
 private: System::Void MainTray_ItemClicked(System::Object^ sender, System::Windows::Forms::ToolStripItemClickedEventArgs^ e) {
     ExitClickedItem = e->ClickedItem;
+}
+bool IsStartupEnabled() {
+    RegistryKey^ key = Registry::CurrentUser->OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+    String^ value = (String^)key->GetValue("SSA");
+    return value != nullptr && value->Equals(Application::ExecutablePath);
+}
+void AddToStartup(bool enable) {
+    RegistryKey^ key = Registry::CurrentUser->OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+    if (enable) {
+        key->SetValue("SSA", Application::ExecutablePath);
+    }
+    else {
+        key->DeleteValue("SSA", false);
+    }
+}
+bool IsStartupEnabledSaved() {
+    RegistryKey^ key = Registry::CurrentUser->OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false);
+    String^ value = safe_cast<String^>(key->GetValue("SSA", ""));
+    return value == Application::ExecutablePath;
+}
+private: System::Void WINRUN_Click(System::Object^ sender, System::EventArgs^ e) {
+    WINRUN->Checked = !WINRUN->Checked;
+}
+private: System::Void WINRUN_CheckedChanged(System::Object^ sender, System::EventArgs^ e) {
+    if (WINRUN->Checked) {
+        WINRUN->ForeColor = Color::MediumSeaGreen;
+    }
+    else {
+        WINRUN->ForeColor = Color::Silver;
+    }
+    AddToStartup(WINRUN->Checked);
+    RegistryKey^ key = Registry::CurrentUser->CreateSubKey("SOFTWARE\\MyProgram");
+    key->SetValue("IsStartupEnabled", WINRUN->Checked);
+}
+private: System::Void ENGLan_Click(System::Object^ sender, System::EventArgs^ e) {
+    if (!Lun) {
+        ToEng();
+        Lun = 1;
+        ENGLan->Checked = true;
+        UKRLan->Checked = false;
+        ENGLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+        UKRLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+        MainTray->Close();
+    }
+}
+private: System::Void UKRLan_Click(System::Object^ sender, System::EventArgs^ e) {
+    if (Lun) {
+        ToUkr();
+        Lun = 0;
+        UKRLan->Checked = true;
+        ENGLan->Checked = false;
+        UKRLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+        ENGLan->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+        MainTray->Close();
+    }
+}
+private: System::Void Pin_Click(System::Object^ sender, System::EventArgs^ e) {
+    Pin->Checked = !Pin->Checked;
+    if (Pin->Checked) {
+        Pin->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
+        SetMiddle();
+        coe = 0;
+        ShowThis->Enabled = false;
+        HideThis->Enabled = false;
+        ShowIt->Enabled = false;
+        UpdateLoud->Enabled = true;
+    }
+    else {
+        Pin->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+        UpdateLoud->Enabled = true;
+        ShowIt->Enabled = true;
+    }
 }
 };
 }
