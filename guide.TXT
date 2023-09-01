@@ -1,0 +1,13 @@
+///Українська///
+Зажміть ЛКМ по іконці обраного сеансу та потягніть вниз або вгору для віднімання чи додавання гучності відповідно
+Двічі натисніть на іконку програми у системному треї для відключення або включення висунення панелі
+Двічі натиснувши по іконці обраного сеансу можна вимкнути або ввімкнути звук
+
+Якщо налаштування не зберігаються, спробуйте відкрити від імені адміністрітора або перевстановити на інший диск
+
+///English///
+Press and hold the left mouse button on the icon of the selected session and drag it down or up to decrease or increase the volume, respectively
+Double-click on the program icon in the system tray to disable or enable the panel pop-up
+Double-clicking on the icon of the selected session can turn off or turn on the sound
+
+If the settings are not saved, try opening as an administrator or reinstall on another disk

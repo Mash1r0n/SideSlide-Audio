@@ -691,6 +691,7 @@ private: System::ComponentModel::IContainer^ components;
                     this->HOTKEYS, this->SYSICON, this->LUN, this->WINRUN
             });
             this->Setti->Name = L"Setti";
+            this->Setti->OwnerItem = this->Settings;
             this->Setti->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
             this->Setti->ShowImageMargin = false;
             this->Setti->Size = System::Drawing::Size(195, 191);
@@ -719,6 +720,7 @@ private: System::ComponentModel::IContainer^ components;
             this->PLA->Font = (gcnew System::Drawing::Font(L"Arial Unicode MS", 12));
             this->PLA->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) { this->Rig, this->Lef });
             this->PLA->Name = L"PLA";
+            this->PLA->OwnerItem = this->SIDE;
             this->PLA->RenderMode = System::Windows::Forms::ToolStripRenderMode::System;
             this->PLA->ShowImageMargin = false;
             this->PLA->Size = System::Drawing::Size(156, 70);
@@ -1107,6 +1109,7 @@ private: System::ComponentModel::IContainer^ components;
             this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &MainForm::MainForm_FormClosing);
             this->Load += gcnew System::EventHandler(this, &MainForm::MainForm_Load);
             this->Shown += gcnew System::EventHandler(this, &MainForm::MainForm_Shown);
+            this->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::MainForm_Paint);
             this->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &MainForm::MainForm_KeyDown);
             this->MainTray->ResumeLayout(false);
             this->Setti->ResumeLayout(false);
@@ -1926,6 +1929,8 @@ private: System::ComponentModel::IContainer^ components;
             Application::Exit();
         }
 
+        MainTray->Visible = true;
+
         Devices = GetDevices();
         MainTray->Renderer = gcnew CustomRenderer();
         Setti->Renderer = gcnew CustomRenderer();
@@ -2185,6 +2190,35 @@ void GrowIcon(PictureBox^ Tst) {
     Tst->Image = image;
 }
 
+bool NowIsClose = false;
+
+void GrowIcon(NotifyIcon^ InTray) {
+    Bitmap^ image = gcnew Bitmap(InTray->Icon->ToBitmap());
+    SideSlideAudio::Icon^ newIcon = nullptr;
+
+    for (int y = 0; y < image->Height; y++) {
+        for (int x = 0; x < image->Width; x++) {
+            Color pixelColor = image->GetPixel(x, y);
+            Color invertedColor = Color::FromArgb(
+                pixelColor.A,
+                255 - pixelColor.R,
+                255 - pixelColor.G,
+                255 - pixelColor.B
+            );
+            image->SetPixel(x, y, invertedColor);
+        }
+    }
+
+    newIcon = SideSlideAudio::Icon::FromHandle(image->GetHicon());
+    System::IO::MemoryStream^ stream = gcnew System::IO::MemoryStream();
+    newIcon->Save(stream);
+    InTray->Icon = newIcon;
+    delete newIcon;
+}
+
+
+
+
 private: System::Void UpdateLoud_Tick(System::Object^ sender, System::EventArgs^ e) {
     GetSC();
     try {
@@ -2213,25 +2247,27 @@ private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArg
     }
 }
 
-    bool FullSC()
-    {
-        POINT cursorPos;
-        GetCursorPos(&cursorPos);
-        HWND hwnd = WindowFromPoint(cursorPos);
-        if (hwnd == GetDesktopWindow())
-        {
-            return false;
-        }
+       bool FullSC()
+       {
+           HWND hWnd = GetForegroundWindow();
 
-        LONG style = GetWindowLong(hwnd, GWL_STYLE);
-        RECT rect;
-        GetWindowRect(hwnd, &rect);
+           if (hWnd != NULL)
+           {
+               RECT rect;
+               GetWindowRect(hWnd, &rect);
 
-        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+               // Получить размеры рабочего экрана
+               int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+               int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-        return (style & WS_POPUP) && (rect.right - rect.left == screenWidth) && (rect.bottom - rect.top == screenHeight);
-    }
+               if (rect.left == 0 && rect.top == 0 && rect.right == screenWidth && rect.bottom == screenHeight)
+               {
+                   return true;
+               }
+           }
+
+           return false;
+       }
 
 private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) {
     POINT cursorPos;
@@ -2240,9 +2276,9 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);  
 
     int threshold = 1;
-
     if (Side) {
         if (screenWidth - cursorPos.x <= threshold && !FullSC()) {
+            Show();
             HideThis->Enabled = true; //Показать
         }
 
@@ -2253,6 +2289,7 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
     }
     else {
         if (cursorPos.x <= threshold && !FullSC()) {
+            Show();
             ShowThis->Enabled = true; //Показать
         }
 
@@ -2261,14 +2298,27 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
             HideThis->Enabled = true; //Скрыть
         }
     }
-
 }
 
 private: System::Void Icon_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
     isEntered = false;
 }
 private: System::Void InTray_DoubleClick(System::Object^ sender, System::EventArgs^ e) {
-    Application::Exit();
+    if (!NowIsClose) {
+        Pin->Checked = false;
+        Pin->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
+        Location = System::Drawing::Point(StartX + (Side ? 70 : -70), Location.Y);
+        ShowIt->Enabled = false;
+        GrowIcon(InTray);
+        NowIsClose = true;
+    }
+    else {
+        SetMiddle();
+        ShowIt->Enabled = true;
+        System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
+        InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
+        NowIsClose = false;
+    }
 }
 
        int coe = 0;
@@ -2281,6 +2331,9 @@ private: System::Void ShowThis_Tick(System::Object^ sender, System::EventArgs^ e
     else {
         ShowThis->Enabled = false;
         UpdateLoud->Enabled = (Side ? false : true);
+        if (Side) {
+            Hide();
+        }
     }
 }
 
@@ -2294,6 +2347,9 @@ private: System::Void HideThis_Tick(System::Object^ sender, System::EventArgs^ e
         coe = (Side ? 0 : -70);
         HideThis->Enabled = false;
         UpdateLoud->Enabled = (Side ? true : false);
+        if (!Side) {
+            Hide();
+        }
     }
 }
 private: System::Void PicTes_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
@@ -2394,8 +2450,12 @@ private: System::Void Right_Click(System::Object^ sender, System::EventArgs^ e) 
         Lef->Checked = false;
         Side = true;
         coe = 0;
-        UpdateLoud->Enabled = false;
+        UpdateLoud->Enabled = Pin->Checked;
         ShowThis->Enabled = false;
+        ShowIt->Enabled = true;
+        System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
+        InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
+        NowIsClose = false;
         SetMiddle();
         StartX = Location.X;
     }
@@ -2408,10 +2468,14 @@ private: System::Void Left_Click(System::Object^ sender, System::EventArgs^ e) {
         Lef->Checked = true;
         Side = false;
         coe = 0;
-        UpdateLoud->Enabled = false;
+        UpdateLoud->Enabled = Pin->Checked;
         ShowThis->Enabled = false;
+        ShowIt->Enabled = true;
+        System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
+        InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
+        NowIsClose = false;
         SetMiddle();
-        StartX = Location.X;
+        StartX = Location.X;   
     }
 }
 
@@ -2593,6 +2657,7 @@ private: System::Void UKRLan_Click(System::Object^ sender, System::EventArgs^ e)
 }
 private: System::Void Pin_Click(System::Object^ sender, System::EventArgs^ e) {
     Pin->Checked = !Pin->Checked;
+    Show();
     if (Pin->Checked) {
         Pin->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Bold);
         SetMiddle();
@@ -2601,12 +2666,18 @@ private: System::Void Pin_Click(System::Object^ sender, System::EventArgs^ e) {
         HideThis->Enabled = false;
         ShowIt->Enabled = false;
         UpdateLoud->Enabled = true;
+        System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
+        InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
+        NowIsClose = false;
     }
     else {
         Pin->Font = gcnew System::Drawing::Font(UpAcPan->Font, FontStyle::Regular);
         UpdateLoud->Enabled = true;
         ShowIt->Enabled = true;
     }
+}
+private: System::Void MainForm_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e) {
+
 }
 };
 }
