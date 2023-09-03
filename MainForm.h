@@ -15,6 +15,7 @@
 #include <fstream>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <wchar.h>
+#include <Shlobj.h>
 
 #pragma comment(lib, "Ole32.lib")
 #pragma comment(lib, "user32.lib")
@@ -46,6 +47,7 @@ namespace SideSlideAudio {
     using namespace System::Drawing::Drawing2D;
     using namespace System::Runtime::InteropServices;
     using namespace Microsoft::Win32;
+    using namespace System::IO;
 
 	/// <summary>
 	/// Сводка для MainForm
@@ -354,11 +356,25 @@ namespace SideSlideAudio {
             }
         };
 
+    protected:
+        virtual property System::Windows::Forms::CreateParams^ CreateParams
+        {
+            System::Windows::Forms::CreateParams^ get() override
+            {
+                System::Windows::Forms::CreateParams^ cp = Form::CreateParams;
+                cp->ExStyle |= 0x80;
+                return cp;
+            }
+        }
+
 	public:
 		MainForm(void)
 		{
 			InitializeComponent();
             DoubleBuffered = true;
+            FormBorderStyle = System::Windows::Forms::FormBorderStyle::None;
+            ShowInTaskbar = false;
+            CreateParams->ExStyle |= WS_EX_TOOLWINDOW;
 			//
 			//TODO: добавьте код конструктора
 			//
@@ -603,7 +619,7 @@ private: System::ComponentModel::IContainer^ components;
             // 
             this->InTray->ContextMenuStrip = this->MainTray;
             this->InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
-            this->InTray->Text = L"SSA";
+            this->InTray->Text = L"SideSlide Audio";
             this->InTray->Visible = true;
             this->InTray->DoubleClick += gcnew System::EventHandler(this, &MainForm::InTray_DoubleClick);
             // 
@@ -1099,9 +1115,8 @@ private: System::ComponentModel::IContainer^ components;
             this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(31)), static_cast<System::Int32>(static_cast<System::Byte>(35)),
                 static_cast<System::Int32>(static_cast<System::Byte>(39)));
-            this->ClientSize = System::Drawing::Size(85, 60);
+            this->ClientSize = System::Drawing::Size(120, 60);
             this->Controls->Add(this->MainPan);
-            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::None;
             this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
             this->KeyPreview = true;
             this->Name = L"MainForm";
@@ -1141,8 +1156,34 @@ private: System::ComponentModel::IContainer^ components;
     String^ SysImagePath = ResultISP;
     int Lun = 1;
     //Конец записи данных
-    String^ cfgFileName = "Config.cfgsa";
-    String^ cfgFilePath = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(exePath), cfgFileName);
+    String^ GetSysDataOfAMPath()
+    {
+        PWSTR wszPath = nullptr;
+        HRESULT hr = SHGetKnownFolderPath(FOLDERID_System, 0, nullptr, &wszPath);
+
+        if (SUCCEEDED(hr))
+        {
+            String^ systemPath = marshal_as<String^>(wszPath);
+            CoTaskMemFree(wszPath);
+
+            String^ systemDrivePath = Path::GetPathRoot(systemPath);
+            String^ dataOfAMPath = Path::Combine(systemDrivePath, "SSA_Cfg");
+
+            if (!Directory::Exists(dataOfAMPath))
+            {
+                Directory::CreateDirectory(dataOfAMPath);
+            }
+
+            return dataOfAMPath;
+        }
+        else
+        {
+            throw gcnew Exception("Помилка у директорії");
+        }
+    }
+
+    String^ Way = GetSysDataOfAMPath();
+    String^ cfgFilePath = Way + "\\Config.cfgsa";
     /*String^ cfgFilePath = cfgFileName;*/
 
     int CountOfSeanse = 0;
@@ -1570,6 +1611,8 @@ private: System::ComponentModel::IContainer^ components;
 
         CoUninitialize();
     }
+
+    //Пусть как у Менеджера замутить
 
     void GetAudioSessionMuteStates(cli::array<bool>^ Mutes) {
         HRESULT hr;
@@ -2249,24 +2292,22 @@ private: System::Void UpdateVolume_Tick(System::Object^ sender, System::EventArg
 
        bool FullSC()
        {
-           HWND hWnd = GetForegroundWindow();
-
-           if (hWnd != NULL)
+           POINT cursorPos;
+           GetCursorPos(&cursorPos);
+           HWND hwnd = WindowFromPoint(cursorPos);
+           if (hwnd == GetDesktopWindow())
            {
-               RECT rect;
-               GetWindowRect(hWnd, &rect);
-
-               // Получить размеры рабочего экрана
-               int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-               int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-               if (rect.left == 0 && rect.top == 0 && rect.right == screenWidth && rect.bottom == screenHeight)
-               {
-                   return true;
-               }
+               return false;
            }
 
-           return false;
+           LONG style = GetWindowLong(hwnd, GWL_STYLE);
+           RECT rect;
+           GetWindowRect(hwnd, &rect);
+
+           int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+           int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+           return (style & WS_POPUP) && (rect.right - rect.left == screenWidth) && (rect.bottom - rect.top == screenHeight);
        }
 
 private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) {
@@ -2278,7 +2319,6 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
     int threshold = 1;
     if (Side) {
         if (screenWidth - cursorPos.x <= threshold && !FullSC()) {
-            Show();
             HideThis->Enabled = true; //Показать
         }
 
@@ -2289,7 +2329,6 @@ private: System::Void ShowIt_Tick(System::Object^ sender, System::EventArgs^ e) 
     }
     else {
         if (cursorPos.x <= threshold && !FullSC()) {
-            Show();
             ShowThis->Enabled = true; //Показать
         }
 
@@ -2332,7 +2371,7 @@ private: System::Void ShowThis_Tick(System::Object^ sender, System::EventArgs^ e
         ShowThis->Enabled = false;
         UpdateLoud->Enabled = (Side ? false : true);
         if (Side) {
-            Hide();
+            
         }
     }
 }
@@ -2348,7 +2387,7 @@ private: System::Void HideThis_Tick(System::Object^ sender, System::EventArgs^ e
         HideThis->Enabled = false;
         UpdateLoud->Enabled = (Side ? true : false);
         if (!Side) {
-            Hide();
+            
         }
     }
 }
@@ -2452,7 +2491,7 @@ private: System::Void Right_Click(System::Object^ sender, System::EventArgs^ e) 
         coe = 0;
         UpdateLoud->Enabled = Pin->Checked;
         ShowThis->Enabled = false;
-        ShowIt->Enabled = true;
+        ShowIt->Enabled = !Pin->Checked;
         System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
         InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
         NowIsClose = false;
@@ -2470,7 +2509,7 @@ private: System::Void Left_Click(System::Object^ sender, System::EventArgs^ e) {
         coe = 0;
         UpdateLoud->Enabled = Pin->Checked;
         ShowThis->Enabled = false;
-        ShowIt->Enabled = true;
+        ShowIt->Enabled = !Pin->Checked;
         System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
         InTray->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"InTray.Icon")));
         NowIsClose = false;

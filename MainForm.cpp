@@ -24,7 +24,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         Application::SetCompatibleTextRenderingDefault(false);
         MainForm^ form = gcnew MainForm();
         form->FormClosed += gcnew FormClosedEventHandler(OnFormClosed);
-        form->ShowInTaskbar = false;
         Application::Run(form);
     }
     return 0;
